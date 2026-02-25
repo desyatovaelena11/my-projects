@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Финансовый консультант — персональный план накоплений</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:    #05080f;
+      --card:  #0c1422;
+      --g1:    #00c896;
+      --g2:    #0ea5e9;
+      --gold:  #f0a030;
+      --text:  #ddeef8;
+      --muted: #4d6b80;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Фоновые слои ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 10% 0%,   rgba(0,200,150,.08) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 45% at 90% 100%,  rgba(14,165,233,.07) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 35% at 50% 50%,  rgba(240,160,48,.04) 0%, transparent 55%);
+    }
+
+    /* ── Частицы ── */
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .particle {
+      position: absolute; border-radius: 50%; opacity: 0;
+      animation: rise var(--d,10s) ease-in-out var(--dl,0s) infinite;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(105vh) translateX(0); opacity: 0; }
+      10%  { opacity: .5; }
+      90%  { opacity: .25; }
+      100% { transform: translateY(-5vh) translateX(var(--dx,20px)); opacity: 0; }
+    }
+
+    /* ── Общий контейнер ── */
+    .container {
+      position: relative; z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ══════════════════════════════════
+       HERO
+    ══════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative; z-index: 1;
+    }
+
+    .hero-inner { max-width: 760px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 18px;
+      background: rgba(0,200,150,.08);
+      border: 1px solid rgba(0,200,150,.22);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 600; letter-spacing: 1.2px;
+      color: var(--g1); text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp .7s .1s both;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--g1);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(.6); opacity: .4; }
+    }
+
+    .hero h1 {
+      font-size: clamp(36px, 7vw, 72px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      background: linear-gradient(120deg, #e8f8ff 0%, var(--g1) 35%, var(--g2) 65%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeUp .7s .2s both;
+    }
+
+    .hero-sub {
+      margin-top: 20px;
+      font-size: clamp(16px, 2.5vw, 20px);
+      color: #7fa8c0;
+      max-width: 560px; margin-inline: auto;
+      animation: fadeUp .7s .35s both;
+    }
+
+    .hero-stats {
+      display: flex; justify-content: center; gap: 40px;
+      flex-wrap: wrap;
+      margin: 48px 0;
+      animation: fadeUp .7s .45s both;
+    }
+
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 36px; font-weight: 800;
+      background: linear-gradient(120deg, var(--g1), var(--g2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); letter-spacing: .5px; margin-top: 2px; }
+
+    .hero-cta { animation: fadeUp .7s .55s both; }
+
+    /* ── CTA-кнопка ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 18px 40px;
+      border-radius: 100px;
+      font-size: 16px; font-weight: 700; letter-spacing: .2px;
+      color: #fff; text-decoration: none; border: none; cursor: pointer;
+      background: linear-gradient(120deg, var(--g1) 0%, var(--g2) 100%);
+      position: relative; overflow: hidden;
+      transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+      box-shadow: 0 6px 28px rgba(0,200,150,.35);
+    }
+    .btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(120deg, rgba(255,255,255,.18), transparent);
+      opacity: 0; transition: opacity .2s;
+    }
+    .btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 12px 40px rgba(0,200,150,.5); }
+    .btn:hover::before { opacity: 1; }
+    .btn:active { transform: translateY(0) scale(.98); }
+
+    /* Пульсирующее кольцо */
+    .btn-pulse {
+      position: absolute; inset: -1px; border-radius: inherit;
+      border: 2px solid rgba(0,200,150,.6);
+      animation: btnPulse 2s ease-out infinite;
+      pointer-events: none;
+    }
+    @keyframes btnPulse {
+      0%   { transform: scale(1);   opacity: .7; }
+      70%  { transform: scale(1.15); opacity: 0; }
+      100% { transform: scale(1.15); opacity: 0; }
+    }
+
+    .btn svg { flex-shrink: 0; }
+
+    /* Стрелка вниз */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      color: var(--muted); font-size: 12px; letter-spacing: .5px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ── Анимация появления ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Появление при скролле */
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ══════════════════════════════════
+       СЕКЦИИ
+    ══════════════════════════════════ */
+    section { padding: 96px 0; position: relative; z-index: 1; }
+
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--g1);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(26px, 4vw, 42px);
+      font-weight: 800; letter-spacing: -.5px; line-height: 1.15;
+      color: #e8f4ff;
+    }
+
+    .section-title span {
+      background: linear-gradient(120deg, var(--g1), var(--g2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Разделитель секций */
+    .section-divider {
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,150,.15), transparent);
+    }
+
+    /* ══════════════════════════════════
+       ПРЕИМУЩЕСТВА
+    ══════════════════════════════════ */
+    .features { background: transparent; }
+
+    .features-header { text-align: center; margin-bottom: 56px; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 36px 28px;
+      position: relative; overflow: hidden;
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease, border-color .25s ease;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--g1), var(--g2));
+      opacity: 0; transition: opacity .25s;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(0,200,150,.25);
+      box-shadow: 0 20px 60px rgba(0,200,150,.08);
+    }
+    .card:hover::before { opacity: 1; }
+
+    .card-icon {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: rgba(0,200,150,.08);
+      border: 1px solid rgba(0,200,150,.18);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
+      transition: background .25s, transform .25s;
+    }
+    .card:hover .card-icon {
+      background: rgba(0,200,150,.14);
+      transform: scale(1.08);
+    }
+
+    .card-icon svg { color: var(--g1); }
+
+    .card h3 {
+      font-size: 18px; font-weight: 700; margin-bottom: 12px;
+      color: #e8f4ff; line-height: 1.3;
+    }
+
+    .card p { font-size: 14px; color: #5a8099; line-height: 1.7; }
+
+    /* Номер карточки */
+    .card-num {
+      position: absolute; top: 24px; right: 24px;
+      font-size: 48px; font-weight: 900; line-height: 1;
+      color: rgba(255,255,255,.03);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ══════════════════════════════════
+       ДЛЯ КОГО
+    ══════════════════════════════════ */
+    .audience { background: transparent; }
+
+    .audience-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .audience-list { list-style: none; display: flex; flex-direction: column; gap: 18px; }
+
+    .audience-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 20px 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: border-color .2s, transform .2s;
+    }
+    .audience-item:hover { border-color: rgba(0,200,150,.2); transform: translateX(4px); }
+
+    .audience-icon {
+      width: 40px; height: 40px; flex-shrink: 0;
+      border-radius: 12px;
+      background: rgba(0,200,150,.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .audience-icon svg { color: var(--g1); }
+
+    .audience-item h4 { font-size: 15px; font-weight: 700; color: #e0f0ff; margin-bottom: 4px; }
+    .audience-item p  { font-size: 13px; color: #4d6b80; line-height: 1.6; }
+
+    /* Визуальная панель */
+    .audience-visual {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 36px 32px;
+      position: relative; overflow: hidden;
+    }
+
+    .audience-visual::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,200,150,.07), transparent 60%);
+    }
+
+    .visual-title {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      letter-spacing: .5px; text-transform: uppercase; margin-bottom: 28px;
+    }
+
+    .progress-list { display: flex; flex-direction: column; gap: 20px; }
+
+    .progress-item { }
+    .progress-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .progress-name { font-size: 13px; font-weight: 600; color: #a0c4d8; }
+    .progress-val  { font-size: 13px; font-weight: 700; color: var(--g1); }
+
+    .progress-bar {
+      height: 6px; border-radius: 100px;
+      background: rgba(255,255,255,.06);
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--g1), var(--g2));
+      animation: fillBar 1.5s cubic-bezier(.4,0,.2,1) var(--delay,.3s) both;
+    }
+    @keyframes fillBar {
+      from { width: 0; }
+    }
+
+    .visual-result {
+      margin-top: 28px; padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .result-icon {
+      width: 44px; height: 44px; border-radius: 14px;
+      background: rgba(0,200,150,.1);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .result-text h4 { font-size: 14px; font-weight: 700; color: #e0f0ff; }
+    .result-text p  { font-size: 12px; color: var(--muted); }
+
+    /* ══════════════════════════════════
+       ВЫГОДЫ
+    ══════════════════════════════════ */
+    .benefits { background: transparent; }
+
+    .benefits-header { text-align: center; margin-bottom: 56px; }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .benefit-row {
+      display: flex; gap: 18px; align-items: flex-start;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .benefit-row:hover {
+      border-color: rgba(14,165,233,.25);
+      box-shadow: 0 8px 32px rgba(14,165,233,.06);
+    }
+
+    .benefit-check {
+      width: 32px; height: 32px; flex-shrink: 0;
+      border-radius: 10px;
+      background: rgba(14,165,233,.1);
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+
+    .benefit-row h4 { font-size: 15px; font-weight: 700; color: #d8eeff; margin-bottom: 6px; }
+    .benefit-row p  { font-size: 13px; color: #4d6b80; line-height: 1.65; }
+
+    /* ══════════════════════════════════
+       ФИНАЛЬНЫЙ CTA
+    ══════════════════════════════════ */
+    .final-cta {
+      padding: 100px 0;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+
+    .cta-box {
+      background: var(--card);
+      border: 1px solid rgba(0,200,150,.12);
+      border-radius: 32px;
+      padding: 72px 48px;
+      position: relative; overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 70% at 50% -20%, rgba(0,200,150,.1), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 50% 120%, rgba(14,165,233,.07), transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Декоративные кольца */
+    .cta-ring {
+      position: absolute; border-radius: 50%;
+      border: 1px solid rgba(0,200,150,.06);
+      pointer-events: none;
+    }
+    .cta-ring-1 { width: 400px; height: 400px; top: -100px; right: -100px; }
+    .cta-ring-2 { width: 280px; height: 280px; bottom: -80px; left: -80px; border-color: rgba(14,165,233,.06); }
+
+    .cta-box h2 {
+      font-size: clamp(26px, 4vw, 42px);
+      font-weight: 900; letter-spacing: -.5px; line-height: 1.15;
+      background: linear-gradient(120deg, #e8f8ff 0%, var(--g1) 40%, var(--g2) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .cta-box p {
+      font-size: 16px; color: #4d7a90; max-width: 480px;
+      margin: 0 auto 40px; line-height: 1.7;
+    }
+
+    .cta-note {
+      margin-top: 20px; font-size: 12px; color: var(--muted); letter-spacing: .3px;
+    }
+
+    /* ══════════════════════════════════
+       FOOTER
+    ══════════════════════════════════ */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      font-size: 12px; color: #233040;
+      letter-spacing: .5px;
+    }
+
+    /* ══════════════════════════════════
+       АДАПТИВ
+    ══════════════════════════════════ */
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: 1fr; gap: 16px; }
+      .audience-grid { grid-template-columns: 1fr; gap: 36px; }
+      .audience-visual { display: none; }
+      .benefits-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      section { padding: 72px 0; }
+      .hero { padding: 80px 16px 60px; }
+      .cta-box { padding: 48px 24px; border-radius: 24px; }
+      .hero-stats { gap: 24px; }
+      .btn { padding: 15px 30px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Частицы -->
+<div class="particles" id="particles"></div>
+
+<!-- ══ HERO ══════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      Персональная финансовая стратегия
+    </div>
+
+    <h1>Финансовый<br>консультант</h1>
+
+    <p class="hero-sub">
+      Разработка персонального плана накоплений и инвестиций —
+      чтобы деньги работали на вас, а не наоборот.
+    </p>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">+40%</div>
+        <div class="stat-label">рост накоплений</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3 мес</div>
+        <div class="stat-label">до первых результатов</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">персональный подход</div>
+      </div>
+    </div>
+
+    <div class="hero-cta">
+      <a class="btn" href="#cta">
+        <span class="btn-pulse"></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        Получить консультацию
+      </a>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Узнать больше</span>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══ ПРЕИМУЩЕСТВА ══════════════════════════ -->
+<section class="features">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="section-label">Что вы получаете</div>
+      <h2 class="section-title">Три шага к <span>финансовой свободе</span></h2>
+    </div>
+
+    <div class="cards">
+
+      <!-- Карточка 1 -->
+      <div class="card reveal">
+        <div class="card-num">01</div>
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+            <path d="M11 8v6M8 11h6"/>
+          </svg>
+        </div>
+        <h3>Выявление слабых мест в бюджете</h3>
+        <p>Глубокий анализ ваших финансов — находим скрытые утечки, нерациональные расходы и точки роста, которые вы могли не замечать годами.</p>
+      </div>
+
+      <!-- Карточка 2 -->
+      <div class="card reveal" style="transition-delay:.1s">
+        <div class="card-num">02</div>
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <h3>Управление доходами и расходами</h3>
+        <p>Создаём систему, при которой каждый рубль идёт туда, куда нужно. Вы перестанете задаваться вопросом «куда ушли деньги» — ответ будет всегда перед глазами.</p>
+      </div>
+
+      <!-- Карточка 3 -->
+      <div class="card reveal" style="transition-delay:.2s">
+        <div class="card-num">03</div>
+        <div class="card-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <h3>Пошаговый план финансовой стабильности</h3>
+        <p>Понятный, реалистичный план без воды — с конкретными действиями, сроками и точками контроля. Следуйте шагам и наблюдайте, как растёт ваша финансовая уверенность.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══ ДЛЯ КОГО ══════════════════════════════ -->
+<section class="audience">
+  <div class="container">
+    <div class="audience-grid">
+
+      <div>
+        <div class="reveal">
+          <div class="section-label">Для кого</div>
+          <h2 class="section-title" style="margin-bottom:36px">Это подойдёт вам, если...</h2>
+        </div>
+
+        <ul class="audience-list">
+          <li class="audience-item reveal">
+            <div class="audience-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Деньги заканчиваются раньше зарплаты</h4>
+              <p>Доход есть, а накоплений нет. Кажется, что денег всегда не хватает — независимо от суммы.</p>
+            </div>
+          </li>
+          <li class="audience-item reveal" style="transition-delay:.1s">
+            <div class="audience-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Хотите начать копить или инвестировать</h4>
+              <p>Понимаете, что нужно откладывать, но не знаете с чего начать и сколько откладывать безболезненно.</p>
+            </div>
+          </li>
+          <li class="audience-item reveal" style="transition-delay:.2s">
+            <div class="audience-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Финансы кажутся хаосом</h4>
+              <p>Нет чёткого понимания, сколько приходит, сколько уходит и куда. Хочется порядка и контроля.</p>
+            </div>
+          </li>
+          <li class="audience-item reveal" style="transition-delay:.3s">
+            <div class="audience-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div>
+              <h4>Откладываете финансовые цели «на потом»</h4>
+              <p>Квартира, подушка безопасности, образование детей — всё это «когда-нибудь». Пришло время сделать это реальным.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Визуальная панель -->
+      <div class="audience-visual reveal">
+        <div class="visual-title">Прогресс за 3 месяца</div>
+        <div class="progress-list">
+          <div class="progress-item">
+            <div class="progress-header">
+              <span class="progress-name">Контроль бюджета</span>
+              <span class="progress-val">95%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:95%; --delay:.4s"></div>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-header">
+              <span class="progress-name">Регулярные накопления</span>
+              <span class="progress-val">80%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:80%; --delay:.55s"></div>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-header">
+              <span class="progress-name">Снижение лишних трат</span>
+              <span class="progress-val">70%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:70%; --delay:.7s"></div>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-header">
+              <span class="progress-name">Финансовая уверенность</span>
+              <span class="progress-val">88%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:88%; --delay:.85s"></div>
+            </div>
+          </div>
+        </div>
+        <div class="visual-result">
+          <div class="result-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c896" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
+          </div>
+          <div class="result-text">
+            <h4>Средний рост накоплений</h4>
+            <p>+40% уже в первый квартал работы</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══ ВЫГОДЫ ════════════════════════════════ -->
+<section class="benefits">
+  <div class="container">
+    <div class="benefits-header reveal">
+      <div class="section-label">Почему это выгодно</div>
+      <h2 class="section-title">Инвестиция в себя, которая <span>окупается</span></h2>
+    </div>
+
+    <div class="benefits-grid">
+      <div class="benefit-row reveal">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Экономия от ₽5 000 в месяц</h4>
+          <p>Большинство клиентов обнаруживают скрытые расходы, от которых легко отказаться без потери качества жизни.</p>
+        </div>
+      </div>
+      <div class="benefit-row reveal" style="transition-delay:.1s">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Ясность вместо тревоги</h4>
+          <p>Когда вы понимаете своё финансовое положение — исчезает хронический стресс из-за денег. Вы спокойнее и увереннее.</p>
+        </div>
+      </div>
+      <div class="benefit-row reveal" style="transition-delay:.15s">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Цели становятся реальными</h4>
+          <p>Мечты о жилье, путешествиях или образовании превращаются в конкретные даты с понятными суммами.</p>
+        </div>
+      </div>
+      <div class="benefit-row reveal" style="transition-delay:.2s">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Навыки на всю жизнь</h4>
+          <p>Вы не просто получаете план — вы учитесь управлять финансами самостоятельно. Это работает вечно.</p>
+        </div>
+      </div>
+      <div class="benefit-row reveal" style="transition-delay:.25s">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Без сложных инструментов</h4>
+          <p>Никаких таблиц на 100 строк и непонятных терминов. Только то, что реально работает в вашей жизни.</p>
+        </div>
+      </div>
+      <div class="benefit-row reveal" style="transition-delay:.3s">
+        <div class="benefit-check">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div>
+          <h4>Первые результаты — за 30 дней</h4>
+          <p>Уже в первый месяц вы увидите разницу в своём балансе и почувствуете контроль над финансами.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ФИНАЛЬНЫЙ CTA ══════════════════════════ -->
+<section class="final-cta" id="cta">
+  <div class="container">
+    <div class="cta-box reveal">
+      <div class="cta-ring cta-ring-1"></div>
+      <div class="cta-ring cta-ring-2"></div>
+
+      <h2>Начните свой путь<br>к финансовой свободе</h2>
+      <p>Запишитесь на бесплатную первичную консультацию — разберём вашу ситуацию и наметим первые шаги уже сегодня.</p>
+
+      <a class="btn" href="https://t.me/" target="_blank" rel="noopener">
+        <span class="btn-pulse"></span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        Записаться на консультацию
+      </a>
+
+      <p class="cta-note">Бесплатно · Без обязательств · Конфиденциально</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    ✦ Финансовый консультант · Персональный план накоплений и инвестиций ✦
+  </div>
+</footer>
+
+<script>
+  // --- Частицы ---
+  const wrap = document.getElementById('particles');
+  const colors = ['#00c896','#0ea5e9','#f0a030','#00a878','#38bdf8'];
+  for (let i = 0; i < 32; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = .8 + Math.random() * 2.2;
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${s}px; height:${s}px;
+      background:${colors[i % colors.length]};
+      --d:${8 + Math.random()*10}s;
+      --dl:${-Math.random()*14}s;
+      --dx:${(Math.random()-.5)*100}px;
+    `;
+    wrap.appendChild(p);
+  }
+
+  // --- Reveal при скролле ---
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
