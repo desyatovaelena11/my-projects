@@ -1,1 +1,9 @@
-*.output
+# Claude Code internal files
+.claude/
+
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/

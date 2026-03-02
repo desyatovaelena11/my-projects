@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!--
+    ШАГ 1: Фундамент + Hero-блок
+    Замените все [...] на реальные данные мастера, когда они будут готовы:
+      Ольга   — например, «Ольга» или «Анна Смирнова»
+      Ростове-на-Дону         — например, «Москва» или «Краснодар»
+      https://t.me/Pogorelova77     — ссылка на Telegram, например https://t.me/username
+      [ССЫЛКА_IG]     — ссылка на Instagram
+  -->
+
+  <title>Ольга — маникюр в Ростове-на-Дону</title>
+  <!-- SEO: описание для поисковиков -->
+  <meta name="description" content="Ольга — мастер маникюра в Ростове-на-Дону. Онлайн-запись, гель-лак, дизайн, педикюр. Записывайтесь удобно через Telegram.">
+
+  <style>
+    /* ─── Сброс и базовые настройки ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── Цвета проекта ──────────────────────────────────────────────── */
+    /* Меняем здесь — меняется везде на странице */
+    :root {
+      --bg:          #070f0c;   /* фон — почти чёрный, холодный мятный */
+      --card:        #0c1914;   /* фон карточек */
+      --orange:      #16c47f;   /* акцент — мята */
+      --orange-glow: #2de89a;   /* светлее — для ховеров и градиентов */
+      --text:        #d5f0e8;   /* основной текст */
+      --muted:       #4a7a63;   /* второстепенный текст */
+      --border:      rgba(255, 255, 255, 0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Анимированный фон (частицы) ───────────────────────────────── */
+    /* Лёгкая анимация — частицы плавно поднимаются снизу вверх */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0;
+      animation: rise var(--d, 12s) ease-in-out var(--dl, 0s) infinite;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(105vh) translateX(0);             opacity: 0; }
+      10%  { opacity: 0.4; }
+      90%  { opacity: 0.15; }
+      100% { transform: translateY(-5vh) translateX(var(--dx, 30px)); opacity: 0; }
+    }
+
+    /* ─── Общий контейнер ────────────────────────────────────────────── */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ─── НАВИГАЦИЯ ──────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      background: rgba(7, 15, 12, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    .nav-logo span {
+      color: var(--orange-glow);
+    }
+
+    /* ─── Кнопки ─────────────────────────────────────────────────────── */
+    /* Есть две кнопки: главная (оранжевая) и второстепенная (контур) */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: 50px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(22, 196, 127, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    /* Shimmer — блик скользит по кнопке каждые 3 секунды */
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -80%;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.22), transparent);
+      animation: btn-shimmer 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes btn-shimmer {
+      0%   { left: -80%; opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { left: 160%; opacity: 0; }
+    }
+    .btn-primary:hover {
+      background: var(--orange-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(22, 196, 127, 0.5);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover {
+      border-color: var(--orange);
+      color: var(--orange-glow);
+      transform: translateY(-2px);
+    }
+    /* Маленькая кнопка в навигации */
+    .btn-sm {
+      padding: 8px 20px;
+      font-size: 0.875rem;
+    }
+
+    /* ─── HERO-СЕКЦИЯ ────────────────────────────────────────────────── */
+    /* Это первый экран — самый важный. Здесь клиент решает остаться или уйти */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px; /* 120px сверху — чтобы не перекрывала навигация */
+      position: relative;
+    }
+
+    /* Градиентный «свет» за hero-контентом — создаёт глубину */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%; right: 0; bottom: 0;
+      transform: translateX(-50%);
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 30%, rgba(22, 196, 127, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 20% 80%, rgba(22, 196, 127, 0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Бэйдж над заголовком */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 50px;
+      background: rgba(22, 196, 127, 0.12);
+      border: 1px solid rgba(22, 196, 127, 0.25);
+      color: var(--orange-glow);
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-badge::before {
+      content: '';
+      display: block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--orange-glow);
+      /* мигает — показывает что мастер "онлайн" */
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Главный заголовок */
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 4rem); /* clamp = адаптивный размер */
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    /* Акцентное слово с анимированным градиентом */
+    .hero h1 .accent {
+      background: linear-gradient(135deg, var(--orange-glow) 0%, #b6fcd9 35%, var(--orange) 65%, var(--orange-glow) 100%);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 5s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Подзаголовок */
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 36px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    /* Кнопки hero */
+    .hero-btns {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+      margin-bottom: 14px;
+    }
+    /* Микротекст под кнопками — снимает страх перед записью */
+    .hero-micro {
+      color: var(--muted);
+      font-size: 0.825rem;
+      animation: fadeUp 0.6s 0.35s ease both;
+      margin-bottom: 36px;
+    }
+
+    /* Строчка доверия: рейтинг и кол-во клиентов */
+    .hero-trust {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+    .trust-item strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .trust-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    /* ─── Анимация появления ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── АДАПТИВНОСТЬ hero ─────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .hero-btns .btn-outline { display: none; }
+      .hero { padding: 100px 0 60px; }
+      .trust-divider { display: none; }
+    }
+
+    /* ─── ОБЩИЕ СТИЛИ СЕКЦИЙ ─────────────────────────────────────────── */
+    /* Используются во всех секциях ниже hero */
+    section {
+      padding: 96px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Заголовок секции: метка + большой текст + описание */
+    .section-label {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 480px;
+    }
+    .section-header {
+      margin-bottom: 56px;
+    }
+
+    /* Анимация появления при скролле */
+    /* JS ниже добавляет класс .visible — тогда элемент появляется */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Задержки для карточек — каждая следующая появляется чуть позже */
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+    .reveal-delay-6 { transition-delay: 0.6s; }
+
+    /* ─── КАК ЗАПИСАТЬСЯ ─────────────────────────────────────────────── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      position: relative;
+    }
+    /* Линия-соединитель между шагами (только на десктопе) */
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: calc(33.33% - 8px);
+      right: calc(33.33% - 8px);
+      height: 1px;
+      background: linear-gradient(to right, var(--orange), transparent 50%, var(--orange));
+      opacity: 0.2;
+    }
+    @media (max-width: 700px) {
+      .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .steps-grid::before { display: none; }
+    }
+
+    .step-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Номер шага в кружке */
+    .step-num {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: rgba(22, 196, 127, 0.12);
+      border: 1.5px solid rgba(22, 196, 127, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--orange-glow);
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .step-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* Финальный блок CTA после шагов */
+    .how-cta {
+      margin-top: 48px;
+      text-align: center;
+    }
+    .how-cta p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 12px;
+    }
+
+    /* ─── КОНТАКТЫ ────────────────────────────────────────────────────── */
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 620px) {
+      .contacts-grid { grid-template-columns: 1fr; }
+    }
+
+    .contact-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      text-decoration: none;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .contact-card:hover {
+      border-color: rgba(22, 196, 127, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(22, 196, 127, 0.08);
+    }
+    .contact-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: rgba(22, 196, 127, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+    .contact-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .contact-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .contact-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .contact-hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ─── ФУТЕР ───────────────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 48px;
+    }
+    footer .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+    .footer-links a {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover {
+      color: var(--orange-glow);
+    }
+
+    /* ─── ПОРТФОЛИО ──────────────────────────────────────────────────── */
+    /* Сетка фото: 3 колонки → 2 → 1. Квадратные карточки */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .portfolio-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    /* На мобильном — горизонтальный скролл с snap (вместо 2 колонок) */
+    @media (max-width: 500px) {
+      .portfolio-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 12px;
+        padding-bottom: 4px;
+      }
+      .portfolio-grid::-webkit-scrollbar { display: none; }
+      .portfolio-card {
+        flex: 0 0 75vw;
+        width: 75vw;
+        scroll-snap-align: start;
+      }
+    }
+
+    /* Карточка фото */
+    .portfolio-card {
+      aspect-ratio: 1;          /* квадрат — стандарт для маникюра */
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .portfolio-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 16px 48px rgba(22, 196, 127, 0.12);
+    }
+
+    /* Фото внутри карточки */
+    .portfolio-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .portfolio-card:hover img {
+      transform: scale(1.06);
+    }
+
+    /* Заглушка пока нет фото */
+    .portfolio-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+    .portfolio-placeholder .ph-icon {
+      font-size: 2rem;
+      opacity: 0.5;
+    }
+    .portfolio-placeholder .ph-label {
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    /* Подпись при наведении */
+    .portfolio-caption {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 14px 14px;
+      background: linear-gradient(to top, rgba(7,15,12,0.9) 0%, transparent 100%);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .portfolio-card:hover .portfolio-caption {
+      opacity: 1;
+    }
+
+    /* Кнопка «Смотреть все» под сеткой */
+    .portfolio-more {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    /* ─── УСЛУГИ ─────────────────────────────────────────────────────── */
+    /* Сетка карточек: 3 колонки → 2 → 1 при сужении экрана */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 900px) {
+      .services-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .services-grid { grid-template-columns: 1fr; }
+      section { padding: 64px 0; }
+    }
+
+    /* Карточка услуги */
+    .service-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .service-card:hover {
+      border-color: rgba(22, 196, 127, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(22, 196, 127, 0.1);
+    }
+
+    /* Иконка-эмодзи в кружке */
+    .service-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: rgba(22, 196, 127, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .service-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .service-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      flex: 1; /* растягивает описание, выравнивая кнопки по низу */
+    }
+
+    /* Строчка с ценой и длительностью */
+    .service-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+    /* ─── ЧЕРЕДУЮЩИЙСЯ ФОН СЕКЦИЙ ───────────────────────────────────── */
+    .section-alt { background: var(--card); }
+
+    /* ─── SVG-ВОЛНЫ МЕЖДУ СЕКЦИЯМИ ───────────────────────────────────── */
+    .wave-sep {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      line-height: 0;
+      padding: 0; margin: 0;
+    }
+    .wave-sep svg {
+      display: block;
+      width: 100%;
+      height: 52px;
+    }
+    @media (max-width: 640px) {
+      .wave-sep svg { height: 32px; }
+    }
+
+    /* ─── STICKY CTA — только на мобильных ───────────────────────────── */
+    .sticky-cta { display: none; }
+    @media (max-width: 640px) {
+      .sticky-cta {
+        display: block;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 98;
+        padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: rgba(7, 15, 12, 0.95);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border);
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .sticky-cta.show { transform: translateY(0); }
+      .sticky-cta .btn { width: 100%; justify-content: center; }
+      body.has-sticky { padding-bottom: 76px; }
+    }
+
+    .service-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--orange-glow);
+    }
+    .service-duration {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ─── О МАСТЕРЕ ──────────────────────────────────────────────────── */
+    .about-inner {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+    @media (max-width: 860px) {
+      .about-inner { grid-template-columns: 1fr; gap: 40px; }
+    }
+
+    /* Блок с фото */
+    .about-photo { position: relative; }
+
+    .about-photo img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 24px;
+      display: block;
+    }
+
+    /* Заглушка пока нет фото */
+    .about-photo-placeholder {
+      width: 100%;
+      aspect-ratio: 3/4;
+      border-radius: 24px;
+      background: linear-gradient(145deg, var(--card) 0%, rgba(22,196,127,0.07) 100%);
+      border: 1.5px dashed rgba(22, 196, 127, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      text-align: center;
+      padding: 24px;
+    }
+    .about-ph-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(22, 196, 127, 0.1);
+      border: 1.5px solid rgba(22, 196, 127, 0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      margin-bottom: 4px;
+    }
+    .about-ph-hint {
+      font-size: 0.75rem;
+      opacity: 0.55;
+      margin-top: 2px;
+    }
+
+    /* Бэйдж «7 лет» поверх фото */
+    .about-badge {
+      position: absolute;
+      bottom: 24px; right: 24px;
+      background: rgba(12, 25, 20, 0.92);
+      border: 1px solid rgba(22, 196, 127, 0.25);
+      border-radius: 16px;
+      padding: 14px 18px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+    }
+    .about-badge strong {
+      display: block;
+      font-size: 1.6rem; font-weight: 800;
+      color: var(--orange-glow);
+      line-height: 1;
+    }
+    .about-badge span {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Текст */
+    .about-bio {
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 16px;
+    }
+
+    /* Факты-цифры под текстом */
+    .about-facts {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 32px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+    }
+    .about-fact { display: flex; flex-direction: column; gap: 4px; }
+    .about-fact-num {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--orange-glow);
+      line-height: 1;
+    }
+    .about-fact-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ─── ОТЗЫВЫ ─────────────────────────────────────────────────────── */
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 700px) {
+      .reviews-grid { grid-template-columns: 1fr; }
+    }
+
+    .review-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .review-card:hover {
+      border-color: rgba(22, 196, 127, 0.3);
+      box-shadow: 0 8px 32px rgba(22, 196, 127, 0.06);
+    }
+
+    /* Кавычки */
+    .review-quote {
+      font-size: 2.4rem;
+      color: var(--orange);
+      line-height: 1;
+      opacity: 0.55;
+    }
+
+    .review-text {
+      color: var(--text);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      flex: 1;
+    }
+
+    /* Нижняя строка: имя + дата + звёзды */
+    .review-footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .review-author { display: flex; flex-direction: column; gap: 2px; }
+    .review-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .review-date { font-size: 0.75rem; color: var(--muted); }
+    .review-stars { color: #f5c518; font-size: 0.9rem; letter-spacing: 1px; white-space: nowrap; }
+
+    /* ─── ПРЕИМУЩЕСТВА ───────────────────────────────────────────────── */
+    .perks-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 860px) {
+      .perks-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .perks-grid { grid-template-columns: 1fr; }
+    }
+
+    .perk-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    }
+    .perk-card:hover {
+      border-color: rgba(22, 196, 127, 0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(22, 196, 127, 0.08);
+    }
+    .perk-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: rgba(22, 196, 127, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .perk-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+    .perk-desc {
+      font-size: 0.825rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ─── FAQ ────────────────────────────────────────────────────────── */
+    /* Используем нативный <details>/<summary> — без JS, работает везде */
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 780px;
+    }
+    .faq-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.25s;
+    }
+    .faq-item[open] {
+      border-color: rgba(22, 196, 127, 0.3);
+    }
+    .faq-item summary {
+      padding: 20px 24px;
+      font-size: 0.975rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      user-select: none;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    /* Иконка + / − */
+    .faq-item summary::after {
+      content: '+';
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--orange);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .faq-item[open] summary::after { content: '−'; }
+    .faq-answer {
+      padding: 0 24px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* ─── ПРОГРЕСС-БАР ПРОКРУТКИ ─────────────────────────────────────── */
+    /* Тонкая светящаяся линия вверху страницы — показывает прогресс чтения */
+    .scroll-progress {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      z-index: 200;
+      pointer-events: none;
+    }
+    .scroll-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, var(--orange), var(--orange-glow));
+      box-shadow: 0 0 10px rgba(45, 232, 154, 0.65);
+      border-radius: 0 1px 1px 0;
+      transition: width 0.08s linear;
+    }
+
+    /* ─── БЛЕСК НА КАРТОЧКАХ ПРИ НАВЕДЕНИИ ──────────────────────────── */
+    /* Полоса света скользит по карточке слева направо при hover */
+    .service-card,
+    .review-card,
+    .perk-card { position: relative; overflow: hidden; }
+    .service-card::after,
+    .review-card::after,
+    .perk-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.05) 50%, transparent 70%);
+      transform: translateX(-120%);
+      transition: transform 0.55s ease;
+      pointer-events: none;
+    }
+    .service-card:hover::after,
+    .review-card:hover::after,
+    .perk-card:hover::after { transform: translateX(120%); }
+
+    /* ─── АНИМАЦИЯ ЦИФР ──────────────────────────────────────────────── */
+    /* Цифры «выпрыгивают» с пружинным эффектом когда входят в видимость */
+    @keyframes numPop {
+      from { transform: translateY(14px) scale(0.75); }
+      65%  { transform: translateY(-3px)  scale(1.08); }
+      to   { transform: none; }
+    }
+    .about-fact-num { display: inline-block; }
+    .about-fact-num.animated { animation: numPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Прогресс-бар прокрутки страницы -->
+  <div class="scroll-progress" aria-hidden="true">
+    <div class="scroll-progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- ── Анимированные частицы на фоне ─────────────────────────────── -->
+  <div class="particles" id="particles"></div>
+
+  <!-- ── НАВИГАЦИЯ ─────────────────────────────────────────────────── -->
+  <nav>
+    <div class="container">
+      <!-- Логотип = имя мастера. Замените Ольга -->
+      <a href="#" class="nav-logo">
+        <span>Ольга</span> · маникюр
+      </a>
+      <!-- Кнопка записи. Замените https://t.me/Pogorelova77 на реальный Telegram -->
+      <a href="https://t.me/Pogorelova77" class="btn btn-primary btn-sm">Записаться</a>
+    </div>
+  </nav>
+
+  <!-- ── HERO: главный экран ───────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+
+        <!-- Бэйдж "онлайн" — показывает что запись открыта -->
+        <div class="hero-badge">Запись открыта</div>
+
+        <!-- Главный заголовок. Оранжевое слово — самое важное -->
+        <h1>
+          Маникюр, который<br>
+          ты <span class="accent">полюбишь</span>
+        </h1>
+
+        <!-- Подзаголовок — конкретная выгода + имя + город -->
+        <p class="hero-sub">
+          Ольга — мастер маникюра в Ростове-на-Дону.
+          Покрытие держится до 3 недель — запишитесь онлайн за пару минут.
+        </p>
+
+        <!-- Две кнопки. На мобильном вторая скрывается -->
+        <div class="hero-btns">
+          <!-- Главная кнопка — ведёт в Telegram -->
+          <a href="https://t.me/Pogorelova77" class="btn btn-primary">
+            Записаться в Telegram
+          </a>
+          <!-- Второстепенная — прокрутка вниз к портфолио -->
+          <a href="#portfolio" class="btn btn-outline">
+            Смотреть работы
+          </a>
+        </div>
+
+        <!-- Микротекст — снимает типичные страхи перед первой записью -->
+        <p class="hero-micro">Отвечаю каждый день с 9:00 до 21:00 · Без предоплаты</p>
+
+        <!-- Строчка доверия. Замените цифры на реальные -->
+        <div class="hero-trust">
+          <div class="trust-item">
+            ★★★★★ <strong>5.0</strong>
+          </div>
+          <div class="trust-divider"></div>
+          <div class="trust-item">
+            Клиентов: <strong>5000+</strong>
+          </div>
+          <div class="trust-divider"></div>
+          <div class="trust-item">
+            Опыт: <strong>7 лет</strong>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── О МАСТЕРЕ ────────────────────────────────────────────────── -->
+  <!-- Фото: замените .about-photo-placeholder на <img src="ольга.jpg" alt="Ольга — мастер маникюра"> -->
+  <section id="about">
+    <div class="container">
+      <div class="about-inner">
+
+        <!-- ФОТО — здесь будет реальное фото Ольги -->
+        <div class="about-photo reveal">
+          <div class="about-photo-placeholder">
+            <div class="about-ph-icon">🧑‍🎨</div>
+            <p>Здесь будет фото Ольги</p>
+            <p class="about-ph-hint">Вертикальное, хорошее освещение, улыбка</p>
+          </div>
+          <div class="about-badge">
+            <strong>7</strong>
+            <span>лет опыта</span>
+          </div>
+        </div>
+
+        <!-- ТЕКСТ — замените на слова от Ольги -->
+        <div class="about-content reveal reveal-delay-1">
+          <span class="section-label">О мастере</span>
+          <h2 class="section-title">Привет, я Ольга</h2>
+
+          <p class="about-bio">
+            Занимаюсь маникюром уже 7 лет — и каждый раз мне это нравится
+            так же, как в первый. За это время сделала больше 5&thinsp;000 работ
+            и повидала самые разные запросы: от классики до сложного дизайна.
+          </p>
+          <p class="about-bio">
+            Работаю только с профессиональными материалами, соблюдаю стерильность.
+            Всегда слушаю, что хочет клиентка — и честно говорю, что получится,
+            а что нет. Приходите с идеей или без — разберёмся вместе.
+          </p>
+
+          <div class="about-facts">
+            <div class="about-fact">
+              <span class="about-fact-num" data-count="7">7</span>
+              <span class="about-fact-label">лет опыта</span>
+            </div>
+            <div class="about-fact">
+              <span class="about-fact-num" data-count="5000" data-suffix="+">5000+</span>
+              <span class="about-fact-label">клиенток</span>
+            </div>
+            <div class="about-fact">
+              <span class="about-fact-num">★ 5.0</span>
+              <span class="about-fact-label">средняя оценка</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ШАГ 3: ПОРТФОЛИО ─────────────────────────────────────────── -->
+  <!-- Замените заглушки на реальные фото: добавьте <img src="фото.jpg"> вместо .portfolio-placeholder -->
+  <section id="portfolio">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Портфолио</span>
+        <h2 class="section-title">Мои работы</h2>
+        <p class="section-sub">
+          Каждый дизайн — авторский. Приходи с идеей — воплотим вместе.
+        </p>
+      </div>
+
+      <div class="portfolio-grid">
+
+        <!-- Карточка 1. Чтобы добавить фото: <img src="photo1.jpg" alt="Описание"> -->
+        <div class="portfolio-card reveal reveal-delay-1">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">🌸</span>
+            <span class="ph-label">Нежный дизайн</span>
+          </div>
+          <div class="portfolio-caption">Нежный дизайн · гель-лак</div>
+        </div>
+
+        <!-- Карточка 2 -->
+        <div class="portfolio-card reveal reveal-delay-2">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">✨</span>
+            <span class="ph-label">Блёстки и втирка</span>
+          </div>
+          <div class="portfolio-caption">Блёстки и втирка · дизайн</div>
+        </div>
+
+        <!-- Карточка 3 -->
+        <div class="portfolio-card reveal reveal-delay-3">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">🖤</span>
+            <span class="ph-label">Классика</span>
+          </div>
+          <div class="portfolio-caption">Классика · French</div>
+        </div>
+
+        <!-- Карточка 4 -->
+        <div class="portfolio-card reveal reveal-delay-4">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">🌿</span>
+            <span class="ph-label">Природный стиль</span>
+          </div>
+          <div class="portfolio-caption">Природный стиль · гель</div>
+        </div>
+
+        <!-- Карточка 5 -->
+        <div class="portfolio-card reveal reveal-delay-5">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">💜</span>
+            <span class="ph-label">Цветной маникюр</span>
+          </div>
+          <div class="portfolio-caption">Цветной маникюр · лак</div>
+        </div>
+
+        <!-- Карточка 6 -->
+        <div class="portfolio-card reveal reveal-delay-6">
+          <div class="portfolio-placeholder">
+            <span class="ph-icon">💎</span>
+            <span class="ph-label">Стразы и дизайн</span>
+          </div>
+          <div class="portfolio-caption">Стразы и дизайн · объём</div>
+        </div>
+
+      </div><!-- /portfolio-grid -->
+
+      <!-- Кнопка-ссылка на Instagram -->
+      <div class="portfolio-more reveal">
+        <a href="[ССЫЛКА_IG]" class="btn btn-outline" target="_blank" rel="noopener">
+          Больше работ в Instagram →
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Волна: Портфолио (#070f0c) → Услуги (#0c1914) ────────────── -->
+  <div class="wave-sep" aria-hidden="true">
+    <svg viewBox="0 0 1440 52" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="52" fill="#070f0c"/>
+      <path d="M0,26 C350,0 1090,52 1440,26 L1440,52 L0,52 Z" fill="#0c1914"/>
+    </svg>
+  </div>
+
+  <!-- ── ШАГ 2: УСЛУГИ ────────────────────────────────────────────── -->
+  <!-- Замените [ЦЕНА] и [ВРЕМЯ] на реальные данные мастера -->
+  <section id="services" class="section-alt">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Услуги</span>
+        <h2 class="section-title">Что я делаю</h2>
+        <p class="section-sub">
+          Все цены указаны за работу мастера.
+          Материалы включены в стоимость.
+        </p>
+      </div>
+
+      <div class="services-grid">
+
+        <!-- Карточка 1 -->
+        <div class="service-card reveal reveal-delay-1">
+          <div class="service-icon">💅</div>
+          <div class="service-name">Классический маникюр</div>
+          <div class="service-desc">
+            Обработка кутикулы, придание формы, уход за ногтями.
+            Без покрытия.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+        <!-- Карточка 2 -->
+        <div class="service-card reveal reveal-delay-2">
+          <div class="service-icon">✨</div>
+          <div class="service-name">Маникюр с гель-лаком</div>
+          <div class="service-desc">
+            Классический маникюр + стойкое покрытие гель-лаком.
+            Держится до 3 недель.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+        <!-- Карточка 3 -->
+        <div class="service-card reveal reveal-delay-3">
+          <div class="service-icon">🎨</div>
+          <div class="service-name">Дизайн ногтей</div>
+          <div class="service-desc">
+            Роспись, втирки, фольга, стразы — любой дизайн
+            по вашему пожеланию или из каталога.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+        <!-- Карточка 4 -->
+        <div class="service-card reveal reveal-delay-4">
+          <div class="service-icon">🦶</div>
+          <div class="service-name">Педикюр</div>
+          <div class="service-desc">
+            Обработка стоп, кутикулы, придание формы.
+            С покрытием или без.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+        <!-- Карточка 5 -->
+        <div class="service-card reveal reveal-delay-5">
+          <div class="service-icon">💎</div>
+          <div class="service-name">Наращивание ногтей</div>
+          <div class="service-desc">
+            Акрил или гель — на выбор. Любая форма и длина.
+            Коррекция через 3–4 недели.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+        <!-- Карточка 6 -->
+        <div class="service-card reveal reveal-delay-6">
+          <div class="service-icon">🔄</div>
+          <div class="service-name">Снятие покрытия</div>
+          <div class="service-desc">
+            Аккуратное снятие гель-лака или акрила
+            без повреждения натурального ногтя.
+          </div>
+          <div class="service-meta">
+            <span class="service-price">от [ЦЕНА] ₽</span>
+            <span class="service-duration">[ВРЕМЯ] мин</span>
+          </div>
+        </div>
+
+      </div><!-- /services-grid -->
+    </div>
+  </section>
+
+  <!-- ── Волна: Услуги (#0c1914) → Отзывы (#070f0c) ───────────────── -->
+  <div class="wave-sep" aria-hidden="true">
+    <svg viewBox="0 0 1440 52" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="52" fill="#0c1914"/>
+      <path d="M0,26 C350,52 1090,0 1440,26 L1440,52 L0,52 Z" fill="#070f0c"/>
+    </svg>
+  </div>
+
+  <!-- ── ОТЗЫВЫ ───────────────────────────────────────────────────── -->
+  <!-- ЗАМЕНИТЕ на реальные отзывы от клиенток Ольги (4–6 штук, имя + дата) -->
+  <section id="reviews">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Отзывы</span>
+        <h2 class="section-title">Что говорят клиентки</h2>
+        <p class="section-sub">
+          Больше 5 000 работ — и каждая клиентка может рассказать свою историю.
+        </p>
+      </div>
+
+      <div class="reviews-grid">
+
+        <!-- ОТЗЫВ 1 — замените на реальный -->
+        <div class="review-card reveal reveal-delay-1">
+          <div class="review-quote">❝</div>
+          <p class="review-text">
+            Хожу к Ольге уже больше года — и не хочу менять мастера.
+            Всегда аккуратно, красиво и без спешки. Покрытие держится
+            три недели легко, даже при активной работе руками.
+          </p>
+          <div class="review-footer">
+            <div class="review-author">
+              <span class="review-name">Анна К.</span>
+              <span class="review-date">Февраль 2025</span>
+            </div>
+            <span class="review-stars">★★★★★</span>
+          </div>
+        </div>
+
+        <!-- ОТЗЫВ 2 — замените на реальный -->
+        <div class="review-card reveal reveal-delay-2">
+          <div class="review-quote">❝</div>
+          <p class="review-text">
+            Пришла впервые с непростой задачей — сложный дизайн по
+            референсу. Ольга сделала точь-в-точь, даже лучше. Записалась
+            снова на следующий месяц прямо на выходе.
+          </p>
+          <div class="review-footer">
+            <div class="review-author">
+              <span class="review-name">Марина Д.</span>
+              <span class="review-date">Январь 2025</span>
+            </div>
+            <span class="review-stars">★★★★★</span>
+          </div>
+        </div>
+
+        <!-- ОТЗЫВ 3 — замените на реальный -->
+        <div class="review-card reveal reveal-delay-3">
+          <div class="review-quote">❝</div>
+          <p class="review-text">
+            Никак не могла определиться с цветом — Ольга помогла выбрать
+            под мой тон кожи. Объяснила, что пойдёт, а что нет.
+            Результат лучше, чем я представляла. Спасибо за терпение!
+          </p>
+          <div class="review-footer">
+            <div class="review-author">
+              <span class="review-name">Светлана М.</span>
+              <span class="review-date">Декабрь 2024</span>
+            </div>
+            <span class="review-stars">★★★★★</span>
+          </div>
+        </div>
+
+        <!-- ОТЗЫВ 4 — замените на реальный -->
+        <div class="review-card reveal reveal-delay-4">
+          <div class="review-quote">❝</div>
+          <p class="review-text">
+            Беру с собой дочку — ей 14, и Ольга всегда находит с ней
+            общий язык. Обе уходим довольные. Ценю, что мастер
+            настоящий профессионал и при этом очень приятный человек.
+          </p>
+          <div class="review-footer">
+            <div class="review-author">
+              <span class="review-name">Елена П.</span>
+              <span class="review-date">Ноябрь 2024</span>
+            </div>
+            <span class="review-stars">★★★★★</span>
+          </div>
+        </div>
+
+      </div><!-- /reviews-grid -->
+    </div>
+  </section>
+
+  <!-- ── ПРЕИМУЩЕСТВА ─────────────────────────────────────────────── -->
+  <section id="perks">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Почему Ольга</span>
+        <h2 class="section-title">Чем я отличаюсь</h2>
+        <p class="section-sub">
+          Конкретные вещи, которые важны моим клиенткам.
+        </p>
+      </div>
+
+      <div class="perks-grid">
+
+        <div class="perk-card reveal reveal-delay-1">
+          <div class="perk-icon">🧼</div>
+          <div>
+            <div class="perk-title">Стерильность</div>
+            <div class="perk-desc">Одноразовые файлы, стерильные инструменты — каждый раз для каждой клиентки.</div>
+          </div>
+        </div>
+
+        <div class="perk-card reveal reveal-delay-2">
+          <div class="perk-icon">⏰</div>
+          <div>
+            <div class="perk-title">Точно по времени</div>
+            <div class="perk-desc">Начинаю в назначенное время. Не придётся ждать в коридоре.</div>
+          </div>
+        </div>
+
+        <div class="perk-card reveal reveal-delay-3">
+          <div class="perk-icon">📩</div>
+          <div>
+            <div class="perk-title">Напоминание за день</div>
+            <div class="perk-desc">Напишу накануне визита — чтобы вы не забыли и успели перенести, если нужно.</div>
+          </div>
+        </div>
+
+        <div class="perk-card reveal reveal-delay-4">
+          <div class="perk-icon">💎</div>
+          <div>
+            <div class="perk-title">Проф. материалы</div>
+            <div class="perk-desc">Работаю с проверенными брендами. Покрытие держится, ногти остаются здоровыми.</div>
+          </div>
+        </div>
+
+        <div class="perk-card reveal reveal-delay-5">
+          <div class="perk-icon">🎨</div>
+          <div>
+            <div class="perk-title">Любой дизайн</div>
+            <div class="perk-desc">От классики до сложной росписи. Приходите с идеей — воплотим вместе.</div>
+          </div>
+        </div>
+
+        <div class="perk-card reveal reveal-delay-6">
+          <div class="perk-icon">🔄</div>
+          <div>
+            <div class="perk-title">Гибкая запись</div>
+            <div class="perk-desc">Нужно перенести или отменить — просто напишите. Без штрафов и лишних вопросов.</div>
+          </div>
+        </div>
+
+      </div><!-- /perks-grid -->
+    </div>
+  </section>
+
+  <!-- ── FAQ ──────────────────────────────────────────────────────── -->
+  <section id="faq">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Вопросы</span>
+        <h2 class="section-title">Часто спрашивают</h2>
+        <p class="section-sub">
+          Не нашли ответ — просто напишите в Telegram, отвечу.
+        </p>
+      </div>
+
+      <div class="faq-list">
+
+        <details class="faq-item reveal reveal-delay-1">
+          <summary>Сколько держится покрытие?</summary>
+          <p class="faq-answer">
+            Гель-лак держится в среднем 2–3 недели. Точный срок зависит от типа ногтей,
+            образа жизни и ухода. Если покрытие начало отходить раньше — напишите,
+            разберёмся.
+          </p>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-2">
+          <summary>Где вы принимаете?</summary>
+          <p class="faq-answer">
+            В Ростове-на-Дону. Точный адрес кабинета пришлю при записи в Telegram —
+            чтобы вам было удобно добраться.
+          </p>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-3">
+          <summary>Нужна ли предоплата?</summary>
+          <p class="faq-answer">
+            Нет, предоплата не нужна. Оплата — по итогу визита, наличными
+            или переводом на карту.
+          </p>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-4">
+          <summary>Что если нужно перенести или отменить запись?</summary>
+          <p class="faq-answer">
+            Просто напишите мне в Telegram — желательно хотя бы за несколько часов.
+            Перенесём на удобное время без лишних вопросов.
+          </p>
+        </details>
+
+        <details class="faq-item reveal reveal-delay-5">
+          <summary>Принимаете ли детей?</summary>
+          <p class="faq-answer">
+            Да. Делаю маникюр девочкам от 10 лет в сопровождении мамы.
+            Уточните при записи — выделю время с запасом.
+          </p>
+        </details>
+
+      </div><!-- /faq-list -->
+    </div>
+  </section>
+
+  <!-- ── Волна: Преимущества (#070f0c) → Запись (#0c1914) ─────────── -->
+  <div class="wave-sep" aria-hidden="true">
+    <svg viewBox="0 0 1440 52" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="52" fill="#070f0c"/>
+      <path d="M0,26 C350,0 1090,52 1440,26 L1440,52 L0,52 Z" fill="#0c1914"/>
+    </svg>
+  </div>
+
+  <!-- ── ШАГ 4: КАК ЗАПИСАТЬСЯ ────────────────────────────────────── -->
+  <section id="how" class="section-alt">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Запись</span>
+        <h2 class="section-title">Как это работает</h2>
+        <p class="section-sub">
+          Три шага — и ваш визит назначен. Без регистрации и лишних вопросов.
+        </p>
+      </div>
+
+      <div class="steps-grid">
+
+        <div class="step-card reveal reveal-delay-1">
+          <div class="step-num">1</div>
+          <div class="step-title">Выберите услугу</div>
+          <div class="step-desc">
+            Посмотрите список услуг и выберите то, что вам нужно.
+            Не уверены — спросите в Telegram, подскажу.
+          </div>
+        </div>
+
+        <div class="step-card reveal reveal-delay-2">
+          <div class="step-num">2</div>
+          <div class="step-title">Напишите в Telegram</div>
+          <div class="step-desc">
+            Отправьте сообщение с названием услуги и удобными
+            датой и временем. Отвечу в течение часа.
+          </div>
+        </div>
+
+        <div class="step-card reveal reveal-delay-3">
+          <div class="step-num">3</div>
+          <div class="step-title">Приходите</div>
+          <div class="step-desc">
+            За день до визита пришлю напоминание.
+            Если планы изменились — просто напишите, перенесём.
+          </div>
+        </div>
+
+      </div>
+
+      <div class="how-cta reveal">
+        <a href="https://t.me/Pogorelova77" class="btn btn-primary" target="_blank" rel="noopener">
+          Записаться в Telegram
+        </a>
+        <p>Отвечаю каждый день с 9:00 до 21:00</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Волна: Запись (#0c1914) → Контакты (#070f0c) ─────────────── -->
+  <div class="wave-sep" aria-hidden="true">
+    <svg viewBox="0 0 1440 52" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1440" height="52" fill="#0c1914"/>
+      <path d="M0,26 C350,52 1090,0 1440,26 L1440,52 L0,52 Z" fill="#070f0c"/>
+    </svg>
+  </div>
+
+  <!-- ── ШАГ 5: КОНТАКТЫ ────────────────────────────────────────────── -->
+  <section id="contacts">
+    <div class="container">
+
+      <div class="section-header reveal">
+        <span class="section-label">Контакты</span>
+        <h2 class="section-title">Где меня найти</h2>
+        <p class="section-sub">
+          Пишите в Telegram — это самый быстрый способ.
+        </p>
+      </div>
+
+      <div class="contacts-grid">
+
+        <!-- Telegram -->
+        <a href="https://t.me/Pogorelova77" class="contact-card reveal reveal-delay-1" target="_blank" rel="noopener">
+          <div class="contact-icon">✈️</div>
+          <div class="contact-info">
+            <span class="contact-label">Telegram</span>
+            <span class="contact-value">@Pogorelova77</span>
+            <span class="contact-hint">Запись и вопросы</span>
+          </div>
+        </a>
+
+        <!-- Instagram -->
+        <a href="[ССЫЛКА_IG]" class="contact-card reveal reveal-delay-2" target="_blank" rel="noopener">
+          <div class="contact-icon">📸</div>
+          <div class="contact-info">
+            <span class="contact-label">Instagram</span>
+            <span class="contact-value">Фото работ</span>
+            <span class="contact-hint">Актуальные дизайны и новинки</span>
+          </div>
+        </a>
+
+        <!-- Город -->
+        <div class="contact-card reveal reveal-delay-3">
+          <div class="contact-icon">📍</div>
+          <div class="contact-info">
+            <span class="contact-label">Город</span>
+            <span class="contact-value">Ростов-на-Дону</span>
+            <span class="contact-hint">Адрес кабинета — в Telegram</span>
+          </div>
+        </div>
+
+        <!-- Время работы -->
+        <div class="contact-card reveal reveal-delay-4">
+          <div class="contact-icon">🕐</div>
+          <div class="contact-info">
+            <span class="contact-label">Время работы</span>
+            <span class="contact-value">Пн — Сб</span>
+            <span class="contact-hint">Запись по согласованию</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ФУТЕР ──────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <span class="footer-copy">© 2025 Ольга — мастер маникюра · Ростов-на-Дону</span>
+      <div class="footer-links">
+        <a href="#services">Услуги</a>
+        <a href="#portfolio">Портфолио</a>
+        <a href="https://t.me/Pogorelova77" target="_blank" rel="noopener">Telegram</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Sticky CTA — кнопка, прилипающая снизу на мобильном ──────── -->
+  <!-- Появляется только после прокрутки hero. CSS скрывает на десктопе -->
+  <div class="sticky-cta" id="stickyCta">
+    <a href="https://t.me/Pogorelova77" class="btn btn-primary" target="_blank" rel="noopener">
+      Записаться в Telegram
+    </a>
+  </div>
+
+  <!-- ── JavaScript: анимация появления при скролле ──────────────── -->
+  <script>
+    // IntersectionObserver следит за элементами с классом .reveal
+    // Когда элемент появляется в области видимости — добавляем .visible
+    // CSS уже знает что делать с .visible (см. выше в стилях)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target); // наблюдаем только один раз
+          }
+        });
+      },
+      { threshold: 0.1 } // срабатывает когда видно 10% элемента
+    );
+
+    // Подключаем observer ко всем элементам с классом reveal
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+
+  <!-- ── JavaScript: sticky CTA — появляется после прокрутки hero ── -->
+  <script>
+    (function () {
+      const cta  = document.getElementById('stickyCta');
+      const hero = document.querySelector('.hero');
+      if (!cta || !hero) return;
+
+      // Только на мобильных (ширина ≤ 640px)
+      if (!window.matchMedia('(max-width: 640px)').matches) return;
+
+      document.body.classList.add('has-sticky');
+
+      // Показываем кнопку когда hero уходит из вида
+      const obs = new IntersectionObserver(
+        ([entry]) => cta.classList.toggle('show', !entry.isIntersecting),
+        { threshold: 0.1 }
+      );
+      obs.observe(hero);
+    })();
+  </script>
+
+  <!-- ── JavaScript: вау-эффекты — прогресс, параллакс, счётчик ───── -->
+  <script>
+    /* ── Прогресс-бар прокрутки ────────────────────────────────────── */
+    /* Заполняет линию наверху по мере прокрутки страницы */
+    (function () {
+      const fill = document.getElementById('progressFill');
+      if (!fill) return;
+      const update = function () {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        fill.style.width = (max > 0 ? (window.scrollY / max * 100) : 0).toFixed(1) + '%';
+      };
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
+
+    /* ── Параллакс hero ─────────────────────────────────────────────── */
+    /* Hero-контент «сопротивляется» прокрутке — двигается медленнее страницы */
+    (function () {
+      const inner = document.querySelector('.hero-inner');
+      if (!inner) return;
+      inner.style.willChange = 'transform';
+      const limit = window.innerHeight * 1.2;
+      window.addEventListener('scroll', function () {
+        const y = window.scrollY;
+        if (y <= limit) {
+          inner.style.transform = 'translateY(' + (y * 0.22).toFixed(1) + 'px)';
+        }
+      }, { passive: true });
+    })();
+
+    /* ── Счётчик цифр ───────────────────────────────────────────────── */
+    /* «7» и «5000+» плавно считаются вверх когда блок появляется в поле зрения */
+    (function () {
+      const facts = document.querySelector('.about-facts');
+      if (!facts) return;
+
+      function countUp(el, target, suffix, delay) {
+        setTimeout(function () {
+          el.classList.add('animated');
+          const dur = 1300;
+          const start = performance.now();
+          function tick(now) {
+            var t = Math.min((now - start) / dur, 1);
+            var eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+            el.textContent = Math.round(eased * target) + suffix;
+            if (t < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        }, delay);
+      }
+
+      var obs = new IntersectionObserver(function (entries) {
+        if (!entries[0].isIntersecting) return;
+        obs.disconnect();
+        // Анимируем числа с задержкой между ними
+        facts.querySelectorAll('.about-fact-num[data-count]').forEach(function (el, i) {
+          countUp(el, +el.dataset.count, el.dataset.suffix || '', i * 200);
+        });
+        // ★ 5.0 — просто pop-анимация без счёта
+        facts.querySelectorAll('.about-fact-num:not([data-count])').forEach(function (el, i) {
+          setTimeout(function () { el.classList.add('animated'); }, 400 + i * 200);
+        });
+      }, { threshold: 0.5 });
+
+      obs.observe(facts);
+    })();
+  </script>
+
+  <!-- ── JavaScript: создаём частицы программно ───────────────────── -->
+  <script>
+    // Создаём 18 частиц разного размера и скорости
+    // Это чисто декоративно — никак не влияет на функционал
+    const container = document.getElementById('particles');
+    const count = 18;
+
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+
+      // Случайные параметры для каждой частицы
+      const size    = Math.random() * 4 + 2;          // размер 2–6px
+      const left    = Math.random() * 100;             // позиция по горизонтали
+      const delay   = Math.random() * 12;              // задержка старта
+      const dur     = Math.random() * 8 + 10;         // продолжительность 10–18 сек
+      const dx      = (Math.random() - 0.5) * 80;     // смещение по горизонтали
+
+      p.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        left: ${left}%;
+        background: rgba(22, 196, 127, ${Math.random() * 0.4 + 0.1});
+        --d: ${dur}s;
+        --dl: ${delay}s;
+        --dx: ${dx}px;
+      `;
+      container.appendChild(p);
+    }
+  </script>
+
+</body>
+</html>
