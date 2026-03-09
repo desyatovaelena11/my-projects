@@ -1215,15 +1215,19 @@
   function startApp() {
     localStorage.setItem('onboarding_done', '1');
     showScreen('home', 'forward');
+    /* После онбординга показываем оффер (если ещё не видел) */
+    if (!localStorage.getItem('offer_shown')) {
+      document.getElementById('js-offer').classList.remove('hidden');
+    }
   }
 
-  /* ── Экран-оффер: показать один раз ────────────────────────────────── */
+  /* ── Экран-оффер: показать один раз (только если онбординг уже пройден) */
   function closeOffer() {
     document.getElementById('js-offer').classList.add('hidden');
     localStorage.setItem('offer_shown', '1');
   }
 
-  if (!localStorage.getItem('offer_shown')) {
+  if (onboardingDone && !localStorage.getItem('offer_shown')) {
     document.getElementById('js-offer').classList.remove('hidden');
   }
 
