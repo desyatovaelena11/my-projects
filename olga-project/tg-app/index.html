@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <!-- maximum-scale=1 — запрещаем зум на iOS, чтобы выглядело как нативное приложение -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ольга · маникюр</title>
+
+  <!-- Официальный Telegram Mini App SDK — единственная внешняя зависимость -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    /* ── CSS-переменные: акцент + радиусы ─────────────────────────────── */
+    :root {
+      --accent:      #2AABEE;
+      --accent-dark: #1a8fd1;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --dur:         250ms; /* длительность переходов */
+    }
+
+    /* ── Fallback-цвета для тестирования в браузере без Telegram ──────── */
+    /* В Telegram SDK перезапишет эти переменные своими значениями темы    */
+    body {
+      --tg-theme-bg-color:            #ffffff;
+      --tg-theme-secondary-bg-color:  #f0f0f0;
+      --tg-theme-text-color:          #000000;
+      --tg-theme-hint-color:          #999999;
+      --tg-theme-link-color:          #2AABEE;
+      --tg-theme-button-color:        #2AABEE;
+      --tg-theme-button-text-color:   #ffffff;
+      --tg-theme-header-bg-color:     #ffffff;
+      --tg-theme-section-bg-color:    #ffffff;
+      --tg-theme-subtitle-text-color: #666666;
+    }
+
+    /* ── Сброс и базовые стили ─────────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent; /* убираем вспышку при тапе */
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.4;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+
+    /* ── Корневой контейнер ────────────────────────────────────────────── */
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh; /* dvh учитывает браузерный chrome на iOS */
+      overflow: hidden;
+    }
+
+    /* ── Экраны ────────────────────────────────────────────────────────── */
+    /* Все экраны — абсолютно спозиционированы, по умолчанию справа за кадром */
+    .screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      background: var(--tg-theme-bg-color);
+      transform: translateX(100%);
+      will-change: transform;
+    }
+
+    /* Первый экран — видим сразу */
+    #screen-home { transform: translateX(0); }
+
+    /* ── Шапка экрана (sticky) ─────────────────────────────────────────── */
+    .screen-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 16px;
+      background: var(--tg-theme-header-bg-color, var(--tg-theme-bg-color));
+      border-bottom: 1px solid rgba(128, 128, 128, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .screen-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    /* ── Секция-разделитель (серая полоса как в Telegram) ──────────────── */
+    .section-gap {
+      height: 8px;
+      background: var(--tg-theme-secondary-bg-color);
+      margin: 0;
+    }
+
+    .section-label {
+      padding: 16px 16px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Карточки (card) ───────────────────────────────────────────────── */
+    .card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 16px 8px;
+    }
+
+    .card-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-row + .card-row {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(128, 128, 128, 0.12);
+    }
+
+    .card-label {
+      font-size: 12px;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+    }
+
+    .card-value {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    /* ════════════════════════════════════════════════
+       ЭКРАН 1 — Главный (home)
+    ════════════════════════════════════════════════ */
+    .master-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 20px;
+      text-align: center;
+    }
+
+    /* Аватар: инициал «О» на градиенте (заменить на <img> когда будет фото) */
+    .master-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #16c47f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      /* Тень под аватаром */
+      box-shadow: 0 4px 16px rgba(42, 171, 238, 0.3);
+    }
+
+    .master-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .master-city {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color);
+      margin-bottom: 14px;
+    }
+
+    .master-greeting {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .master-sub {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color);
+      margin-bottom: 16px;
+    }
+
+    /* Строка доверия */
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .trust-stars { color: #FFD700; }
+
+    /* Категории */
+    .category-list { padding: 8px 16px 24px; }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius);
+      padding: 0 16px;
+      height: 56px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms;
+      user-select: none;
+    }
+
+    .category-item:active {
+      opacity: 0.65;
+      transform: scale(0.98);
+    }
+
+    .category-icon {
+      font-size: 22px;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tg-theme-bg-color);
+      border-radius: 9px;
+      flex-shrink: 0;
+    }
+
+    .category-name {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .category-count {
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      margin-right: 4px;
+    }
+
+    .category-arrow {
+      color: var(--tg-theme-hint-color);
+      font-size: 20px;
+      font-weight: 300;
+    }
+
+    /* ════════════════════════════════════════════════
+       ЭКРАН 2 — Каталог (catalog)
+    ════════════════════════════════════════════════ */
+
+    /* Горизонтальные фильтры-чипы */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      border: none;
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      transition: background 150ms, color 150ms;
+      user-select: none;
+    }
+
+    .chip.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Список услуг */
+    .service-list { padding: 0 16px 80px; }
+
+    .service-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      min-height: 72px;
+      cursor: pointer;
+      transition: opacity 120ms, transform 120ms;
+      user-select: none;
+    }
+
+    .service-row:active {
+      opacity: 0.65;
+      transform: scale(0.99);
+    }
+
+    .service-row-icon {
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tg-theme-bg-color);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .service-row-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .service-row-name {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 3px;
+    }
+
+    .service-row-desc {
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .service-row-meta {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .service-row-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .service-row-duration {
+      font-size: 12px;
+      color: var(--tg-theme-hint-color);
+      margin-top: 2px;
+    }
+
+    /* Бейдж «Хит» */
+    .badge-hot {
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      background: #FF6B6B;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 0 var(--radius) 0 var(--radius-sm);
+      letter-spacing: 0.04em;
+    }
+
+    /* ════════════════════════════════════════════════
+       ЭКРАН 3 — Карточка услуги (service)
+    ════════════════════════════════════════════════ */
+
+    /* Фото / заглушка с градиентом */
+    .service-photo {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .service-photo-bg {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Блик для глубины */
+    .service-photo-glare {
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%);
+    }
+
+    .service-photo-emoji {
+      position: relative;
+      z-index: 1;
+      font-size: 80px;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+    }
+
+    .service-detail {
+      padding: 20px 16px 80px;
+    }
+
+    .service-detail-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .service-detail-desc {
+      font-size: 15px;
+      color: var(--tg-theme-subtitle-text-color, var(--tg-theme-hint-color));
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    .service-detail-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .service-detail-price {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .service-detail-duration {
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+    }
+
+    /* Плашка «без предоплаты» */
+    .service-policy {
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      line-height: 1.5;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    /* ════════════════════════════════════════════════
+       ЭКРАН 4 — Подтверждение (confirm)
+    ════════════════════════════════════════════════ */
+
+    .confirm-block {
+      padding: 16px 0 0;
+    }
+
+    .confirm-block-label {
+      padding: 0 16px 8px;
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .confirm-info-text {
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      line-height: 1.55;
+    }
+
+    /* ════════════════════════════════════════════════
+       ЭКРАН 5 — Успех (success)
+    ════════════════════════════════════════════════ */
+
+    .success-inner {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 80px;
+      text-align: center;
+    }
+
+    .success-icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+      animation: popIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .success-desc {
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      max-width: 280px;
+    }
+
+    .success-hours {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color);
+      background: var(--tg-theme-secondary-bg-color);
+      padding: 12px 20px;
+      border-radius: var(--radius);
+    }
+
+    /* ── Fallback-кнопки для браузера (без Telegram) ───────────────────── */
+    /* Показываются только когда приложение открыто не в Telegram            */
+    #fallback-ui {
+      display: none; /* скрыт по умолчанию */
+    }
+
+    .fallback-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--tg-theme-bg-color);
+      border-top: 1px solid rgba(128,128,128,0.12);
+      z-index: 100;
+    }
+
+    .fallback-back {
+      height: 48px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(128,128,128,0.25);
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0 20px;
+      min-width: 80px;
+    }
+
+    .fallback-main {
+      flex: 1;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+
+    .fallback-main:active { opacity: 0.8; }
+    .fallback-main:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 1 — Главный
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-home">
+
+    <!-- Профиль мастера -->
+    <div class="master-profile">
+      <!--
+        ЗАМЕНА АВАТАРА: удали <div class="master-avatar"> ниже
+        и вставь вместо него:
+        <img src="../фото-ольги.jpg" alt="Ольга" class="master-avatar"
+             style="object-fit:cover; font-size:0">
+      -->
+      <div class="master-avatar">О</div>
+
+      <div class="master-name">Ольга · маникюр</div>
+      <div class="master-city">📍 Ростов-на-Дону</div>
+      <!-- Текст приветствия подставляется из Telegram данных пользователя -->
+      <div class="master-greeting" id="js-greeting">Привет! 👋</div>
+      <div class="master-sub">Выбери услугу и запишись</div>
+      <div class="trust-badge">
+        <span class="trust-stars">★★★★★</span>
+        <span>5.0 · 5 000+ клиентов · 7 лет опыта</span>
+      </div>
+    </div>
+
+    <div class="section-gap"></div>
+    <div class="section-label">Категории</div>
+
+    <div class="category-list">
+      <div class="category-item" data-cat="manicure">
+        <div class="category-icon">💅</div>
+        <div class="category-name">Маникюр</div>
+        <div class="category-count">3 услуги</div>
+        <div class="category-arrow">›</div>
+      </div>
+      <div class="category-item" data-cat="pedicure">
+        <div class="category-icon">🦶</div>
+        <div class="category-name">Педикюр</div>
+        <div class="category-count">2 услуги</div>
+        <div class="category-arrow">›</div>
+      </div>
+      <div class="category-item" data-cat="design">
+        <div class="category-icon">🎨</div>
+        <div class="category-name">Дизайн</div>
+        <div class="category-count">2 услуги</div>
+        <div class="category-arrow">›</div>
+      </div>
+      <div class="category-item" data-cat="extension">
+        <div class="category-icon">💎</div>
+        <div class="category-name">Наращивание</div>
+        <div class="category-count">3 услуги</div>
+        <div class="category-arrow">›</div>
+      </div>
+    </div>
+
+  </div><!-- /screen-home -->
+
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 2 — Каталог
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-catalog">
+
+    <div class="screen-header">
+      <div class="screen-title">Услуги</div>
+    </div>
+
+    <!-- Фильтры-чипы -->
+    <div class="filter-bar" id="js-filter-bar">
+      <button class="chip active" data-filter="all">Все</button>
+      <button class="chip" data-filter="manicure">Маникюр</button>
+      <button class="chip" data-filter="pedicure">Педикюр</button>
+      <button class="chip" data-filter="design">Дизайн</button>
+      <button class="chip" data-filter="extension">Наращивание</button>
+    </div>
+
+    <!-- Список услуг — заполняется JS -->
+    <div class="service-list" id="js-service-list"></div>
+
+  </div><!-- /screen-catalog -->
+
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 3 — Карточка услуги
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-service">
+
+    <!-- Фото (заглушка с градиентом и эмодзи) -->
+    <div class="service-photo" id="js-service-photo">
+      <div class="service-photo-bg" id="js-photo-bg"></div>
+      <div class="service-photo-glare"></div>
+      <div class="service-photo-emoji" id="js-photo-emoji">💅</div>
+    </div>
+
+    <div class="service-detail">
+      <div class="service-detail-name"    id="js-svc-name"></div>
+      <div class="service-detail-desc"    id="js-svc-desc"></div>
+      <div class="service-detail-meta">
+        <div class="service-detail-price"    id="js-svc-price"></div>
+        <div class="service-detail-duration" id="js-svc-duration"></div>
+      </div>
+      <div class="service-policy">
+        Без предоплаты · Отмена за 2 часа — без вопросов
+      </div>
+    </div>
+
+  </div><!-- /screen-service -->
+
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 4 — Подтверждение
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-confirm">
+
+    <div class="screen-header">
+      <div class="screen-title">Проверьте заказ</div>
+    </div>
+
+    <!-- Блок: услуга -->
+    <div class="confirm-block" style="padding-top:16px">
+      <div class="confirm-block-label">Услуга</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-label">Название</div>
+          <div class="card-value" id="js-confirm-name"></div>
+        </div>
+        <div class="card-row">
+          <div class="card-label">Стоимость</div>
+          <div class="card-value" id="js-confirm-price"></div>
+        </div>
+        <div class="card-row">
+          <div class="card-label">Длительность</div>
+          <div class="card-value" id="js-confirm-duration"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Блок: клиент -->
+    <div class="confirm-block">
+      <div class="confirm-block-label">Вы</div>
+      <div class="card">
+        <div class="card-row">
+          <div class="card-label">Имя</div>
+          <div class="card-value" id="js-confirm-username"></div>
+        </div>
+        <div class="card-row" id="js-confirm-tg-row" style="display:none">
+          <div class="card-label">Telegram</div>
+          <div class="card-value" id="js-confirm-tg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Блок: что дальше -->
+    <div class="confirm-block" style="padding-bottom:80px">
+      <div class="confirm-block-label">Что дальше</div>
+      <div class="card">
+        <div class="confirm-info-text">
+          Ольга получит вашу заявку и напишет в Telegram, чтобы согласовать удобные дату и время.
+          <br><br>
+          Обычно отвечает в течение часа.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screen-confirm -->
+
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 5 — Успех
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-success">
+    <div class="success-inner">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Заявка отправлена!</div>
+      <div class="success-desc">
+        Ольга получила ваш запрос и напишет в Telegram в течение часа, чтобы назначить дату и время.
+      </div>
+      <div class="success-hours">🕘 Работает пн–сб с 9:00 до 21:00</div>
+    </div>
+  </div><!-- /screen-success -->
+
+
+  <!-- Fallback-кнопки (видны только при открытии в браузере, не в Telegram) -->
+  <div id="fallback-ui">
+    <div class="fallback-bar">
+      <button class="fallback-back" id="js-fb-back" onclick="goBack()" style="display:none">← Назад</button>
+      <button class="fallback-main" id="js-fb-main" disabled>—</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+
+<script>
+  /* ═══════════════════════════════════════════════════════════════════════
+     ДАННЫЕ УСЛУГ
+     Чтобы изменить услугу — найди нужный объект и отредактируй поля:
+       name        — название
+       desc        — короткое описание (одна строка в каталоге)
+       fullDesc    — полное описание на карточке услуги
+       price       — цена в рублях (число)
+       duration    — длительность в минутах (число)
+       popular     — true = бейдж «Хит»
+       gradient    — CSS-градиент для фото-заглушки
+  ═══════════════════════════════════════════════════════════════════════ */
+  const SERVICES = [
+    /* ── Маникюр ─────────────────────────────────────────────────────── */
+    {
+      id: 1, category: 'manicure', icon: '💅',
+      name: 'Классический маникюр',
+      desc: 'Обработка кутикулы, форма. Без покрытия.',
+      fullDesc: 'Обработка кутикулы, придание формы ногтям. Идеально для ухоженных рук без покрытия. Включает увлажняющий уход за кожей рук.',
+      price: 800, duration: 60, popular: false,
+      gradient: 'linear-gradient(135deg, #f8c8d4 0%, #f0a0b8 100%)'
+    },
+    {
+      id: 2, category: 'manicure', icon: '💅',
+      name: 'Маникюр с гель-лаком',
+      desc: 'Маникюр + стойкое покрытие до 3 недель.',
+      fullDesc: 'Полный маникюр с нанесением стойкого гель-лака. Покрытие держится 2–3 недели, не скалывается. Более 100 оттенков на выбор.',
+      price: 1500, duration: 90, popular: true,
+      gradient: 'linear-gradient(135deg, #c8e0f8 0%, #98c8f4 100%)'
+    },
+    {
+      id: 3, category: 'manicure', icon: '🔄',
+      name: 'Снятие покрытия',
+      desc: 'Аккуратное снятие гель-лака без повреждений.',
+      fullDesc: 'Профессиональное снятие гель-лакового покрытия. Ноготь остаётся здоровым — без травм и повреждений. Питательный уход после снятия.',
+      price: 300, duration: 20, popular: false,
+      gradient: 'linear-gradient(135deg, #d0f0d0 0%, #a0e0a0 100%)'
+    },
+    /* ── Педикюр ──────────────────────────────────────────────────────── */
+    {
+      id: 4, category: 'pedicure', icon: '🦶',
+      name: 'Классический педикюр',
+      desc: 'Уход за стопами и кутикулой. Без покрытия.',
+      fullDesc: 'Полный уход за стопами: обработка огрубевшей кожи, кутикулы, придание формы ногтям. Увлажняющий массаж стоп в финале.',
+      price: 1200, duration: 75, popular: false,
+      gradient: 'linear-gradient(135deg, #f8e8c0 0%, #f0d080 100%)'
+    },
+    {
+      id: 5, category: 'pedicure', icon: '🦶',
+      name: 'Педикюр с гель-лаком',
+      desc: 'Педикюр + покрытие. Держится 4–6 недель.',
+      fullDesc: 'Полный педикюр с нанесением гель-лака. Результат держится 4–6 недель. Стопы выглядят ухоженно всё лето без обновления.',
+      price: 1800, duration: 100, popular: true,
+      gradient: 'linear-gradient(135deg, #f0c8f4 0%, #e098ec 100%)'
+    },
+    /* ── Дизайн ───────────────────────────────────────────────────────── */
+    {
+      id: 6, category: 'design', icon: '🎨',
+      name: 'Дизайн ногтей',
+      desc: 'Роспись, втирки, фольга, стразы.',
+      fullDesc: 'Авторский дизайн: роспись гель-красками, втирки, фольга, стразы, французский маникюр. Приходи с идеей — воплотим вместе.',
+      price: 500, duration: 45, popular: false,
+      gradient: 'linear-gradient(135deg, #c8c0f8 0%, #a098f0 100%)'
+    },
+    {
+      id: 7, category: 'design', icon: '✨',
+      name: 'Сложный арт-дизайн',
+      desc: 'Детальная роспись, 3D-элементы, авторские работы.',
+      fullDesc: 'Сложный дизайн с детальной ручной росписью, 3D-объёмными элементами или витражным гелем. Каждая работа — авторская и уникальная.',
+      price: 1000, duration: 60, popular: false,
+      gradient: 'linear-gradient(135deg, #f8f0c0 0%, #f0e080 100%)'
+    },
+    /* ── Наращивание ──────────────────────────────────────────────────── */
+    {
+      id: 8, category: 'extension', icon: '💎',
+      name: 'Наращивание гелем',
+      desc: 'Гель-наращивание, любая форма и длина.',
+      fullDesc: 'Наращивание ногтей гелем. Выбор формы (миндаль, квадрат, овал, балерина) и длины. Выглядит естественно, укрепляет ноготь.',
+      price: 2200, duration: 120, popular: false,
+      gradient: 'linear-gradient(135deg, #c8e8f8 0%, #98d0f0 100%)'
+    },
+    {
+      id: 9, category: 'extension', icon: '💎',
+      name: 'Наращивание акрилом',
+      desc: 'Акрил, максимальная прочность и стойкость.',
+      fullDesc: 'Наращивание ногтей акрилом. Самое прочное покрытие — подходит для активного образа жизни. Ноготь сохраняет форму при нагрузках.',
+      price: 2500, duration: 150, popular: false,
+      gradient: 'linear-gradient(135deg, #e8c8f8 0%, #d098f0 100%)'
+    },
+    {
+      id: 10, category: 'extension', icon: '🔄',
+      name: 'Коррекция наращивания',
+      desc: 'Обновление формы по мере отрастания.',
+      fullDesc: 'Коррекция наращенных ногтей по мере отрастания. Обновление формы, устранение дефектов, свежий вид снова.',
+      price: 1500, duration: 90, popular: false,
+      gradient: 'linear-gradient(135deg, #c8f0d0 0%, #98e0a8 100%)'
+    }
+  ];
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     TELEGRAM SDK
+  ═══════════════════════════════════════════════════════════════════════ */
+  const tg = window.Telegram?.WebApp;
+  const inTelegram = !!(tg && tg.initData);
+
+  if (tg) {
+    tg.ready();   /* сообщаем Telegram, что приложение готово */
+    tg.expand();  /* растягиваем на весь экран */
+    tg.disableClosingConfirmation?.();
+  }
+
+  /* Данные пользователя из Telegram (или заглушки для браузера) */
+  const tgUser = tg?.initDataUnsafe?.user || {};
+  const userName     = tgUser.first_name || '';
+  const userLastName = tgUser.last_name  || '';
+  const userLogin    = tgUser.username   || '';
+  const userId       = tgUser.id         || 0;
+
+  /* Приветствие с именем пользователя */
+  document.getElementById('js-greeting').textContent =
+    userName ? `Привет, ${userName}! 👋` : 'Привет! 👋';
+
+  /* Показываем fallback-кнопки если открыто в браузере */
+  if (!inTelegram) {
+    document.getElementById('fallback-ui').style.display = 'block';
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+  ═══════════════════════════════════════════════════════════════════════ */
+  let currentScreen  = 'home';   /* id текущего экрана (без 'screen-') */
+  let navStack       = ['home']; /* стек истории для BackButton         */
+  let selectedSvc    = null;     /* выбранная услуга                    */
+  let activeFilter   = 'all';    /* активный фильтр в каталоге          */
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ
+     Переход «вперёд»: новый экран приходит справа (100% → 0),
+                       старый уходит влево (0 → −30%).
+     Переход «назад»:  текущий уходит вправо (0 → 100%),
+                       предыдущий приходит слева (−30% → 0).
+  ═══════════════════════════════════════════════════════════════════════ */
+  function showScreen(toId, direction) {
+    const fromEl = document.getElementById('screen-' + currentScreen);
+    const toEl   = document.getElementById('screen-' + toId);
+    const DUR    = 250; /* мс */
+
+    /* Ставим toEl в начальную позицию без анимации */
+    toEl.style.transition = 'none';
+    toEl.style.transform  = direction === 'forward' ? 'translateX(100%)' : 'translateX(-30%)';
+
+    /* Принудительный reflow — нужен, чтобы браузер применил позицию до старта анимации */
+    void toEl.offsetWidth;
+
+    /* Запускаем анимацию */
+    const easing = `transform ${DUR}ms ease-out`;
+    fromEl.style.transition = easing;
+    toEl.style.transition   = easing;
+    fromEl.style.transform  = direction === 'forward' ? 'translateX(-30%)' : 'translateX(100%)';
+    toEl.style.transform    = 'translateX(0)';
+
+    /* После завершения анимации убираем fromEl за экран */
+    setTimeout(() => {
+      fromEl.style.transition = 'none';
+      fromEl.style.transform  = 'translateX(100%)';
+    }, DUR + 10);
+
+    currentScreen = toId;
+    updateButtons(toId);
+  }
+
+  function goTo(screenId) {
+    navStack.push(screenId);
+    showScreen(screenId, 'forward');
+  }
+
+  function goBack() {
+    if (navStack.length <= 1) return;
+    navStack.pop();
+    const prev = navStack[navStack.length - 1];
+    showScreen(prev, 'back');
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     КНОПКИ TELEGRAM (BackButton + MainButton) + FALLBACK для браузера
+  ═══════════════════════════════════════════════════════════════════════ */
+  function updateButtons(screen) {
+    const BB = tg?.BackButton;
+    const MB = tg?.MainButton;
+
+    /* Fallback-элементы */
+    const fbBack = document.getElementById('js-fb-back');
+    const fbMain = document.getElementById('js-fb-main');
+
+    switch (screen) {
+      case 'home':
+        BB?.hide();
+        MB?.hide();
+        tg?.disableClosingConfirmation?.();
+        if (fbBack) fbBack.style.display = 'none';
+        if (fbMain) { fbMain.disabled = true; fbMain.textContent = '—'; }
+        break;
+
+      case 'catalog':
+        BB?.show();
+        MB?.hide();
+        if (fbBack) fbBack.style.display = '';
+        if (fbMain) { fbMain.disabled = true; fbMain.textContent = 'Выберите услугу'; }
+        break;
+
+      case 'service':
+        BB?.show();
+        MB?.setText('Записаться');
+        MB?.show();
+        MB?.enable();
+        if (fbBack) fbBack.style.display = '';
+        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Записаться'; }
+        break;
+
+      case 'confirm':
+        BB?.show();
+        MB?.setText('Отправить заявку');
+        MB?.show();
+        MB?.enable();
+        tg?.enableClosingConfirmation?.();
+        if (fbBack) fbBack.style.display = '';
+        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Отправить заявку'; }
+        break;
+
+      case 'success':
+        BB?.hide();
+        MB?.setText('Готово');
+        MB?.show();
+        MB?.enable();
+        tg?.disableClosingConfirmation?.();
+        tg?.HapticFeedback?.notificationOccurred('success');
+        if (fbBack) fbBack.style.display = 'none';
+        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Готово'; }
+        break;
+    }
+  }
+
+  /* Обработчики Telegram-кнопок */
+  if (tg) {
+    tg.BackButton?.onClick(goBack);
+
+    tg.MainButton?.onClick(() => {
+      if (currentScreen === 'service')  { tg.HapticFeedback?.impactOccurred('light'); openConfirm(); }
+      if (currentScreen === 'confirm')  { sendBooking(); }
+      if (currentScreen === 'success')  { tg.close(); }
+    });
+  }
+
+  /* Fallback MainButton (браузер) */
+  document.getElementById('js-fb-main')?.addEventListener('click', () => {
+    if (currentScreen === 'service')  openConfirm();
+    if (currentScreen === 'confirm')  sendBooking();
+    if (currentScreen === 'success')  alert('В Telegram нажмите «Готово» чтобы закрыть приложение');
+  });
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     РЕНДЕР КАТАЛОГА (Экран 2)
+  ═══════════════════════════════════════════════════════════════════════ */
+  function renderCatalog(filter) {
+    activeFilter = filter;
+
+    /* Подсвечиваем активный чип */
+    document.querySelectorAll('#js-filter-bar .chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.filter === filter);
+    });
+
+    /* Фильтруем список */
+    const list = filter === 'all'
+      ? SERVICES
+      : SERVICES.filter(s => s.category === filter);
+
+    document.getElementById('js-service-list').innerHTML = list.map(s => `
+      <div class="service-row" data-id="${s.id}">
+        ${s.popular ? '<div class="badge-hot">Хит</div>' : ''}
+        <div class="service-row-icon">${s.icon}</div>
+        <div class="service-row-info">
+          <div class="service-row-name">${s.name}</div>
+          <div class="service-row-desc">${s.desc}</div>
+        </div>
+        <div class="service-row-meta">
+          <div class="service-row-price">${s.price.toLocaleString('ru-RU')} ₽</div>
+          <div class="service-row-duration">⏱ ${s.duration} мин</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* Инициализация каталога */
+  renderCatalog('all');
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ОБРАБОТЧИКИ СОБЫТИЙ (делегирование — один listener на весь app)
+  ═══════════════════════════════════════════════════════════════════════ */
+  document.getElementById('app').addEventListener('click', e => {
+
+    /* Тап на категорию (Экран 1) */
+    const catItem = e.target.closest('.category-item');
+    if (catItem) {
+      const cat = catItem.dataset.cat;
+      renderCatalog(cat);
+      goTo('catalog');
+      /* Прокручиваем нужный чип в видимую область */
+      setTimeout(() => {
+        document.querySelector(`#js-filter-bar [data-filter="${cat}"]`)
+          ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      }, 260);
+      return;
+    }
+
+    /* Тап на чип-фильтр (Экран 2) */
+    const chip = e.target.closest('.chip');
+    if (chip) {
+      renderCatalog(chip.dataset.filter);
+      return;
+    }
+
+    /* Тап на строку услуги (Экран 2) */
+    const svcRow = e.target.closest('.service-row');
+    if (svcRow) {
+      openService(parseInt(svcRow.dataset.id));
+      tg?.HapticFeedback?.selectionChanged();
+      return;
+    }
+  });
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ОТКРЫТЬ КАРТОЧКУ УСЛУГИ (Экран 3)
+  ═══════════════════════════════════════════════════════════════════════ */
+  function openService(id) {
+    const svc = SERVICES.find(s => s.id === id);
+    if (!svc) return;
+    selectedSvc = svc;
+
+    /* Заполняем экран */
+    document.getElementById('js-photo-bg').style.background    = svc.gradient;
+    document.getElementById('js-photo-emoji').textContent       = svc.icon;
+    document.getElementById('js-svc-name').textContent          = svc.name;
+    document.getElementById('js-svc-desc').textContent          = svc.fullDesc;
+    document.getElementById('js-svc-price').textContent         = svc.price.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('js-svc-duration').textContent      = '⏱ ' + svc.duration + ' минут';
+
+    /* Прокручиваем экран в начало */
+    document.getElementById('screen-service').scrollTop = 0;
+
+    goTo('service');
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ОТКРЫТЬ ПОДТВЕРЖДЕНИЕ (Экран 4)
+  ═══════════════════════════════════════════════════════════════════════ */
+  function openConfirm() {
+    if (!selectedSvc) return;
+
+    /* Услуга */
+    document.getElementById('js-confirm-name').textContent     = selectedSvc.name;
+    document.getElementById('js-confirm-price').textContent    = selectedSvc.price.toLocaleString('ru-RU') + ' ₽';
+    document.getElementById('js-confirm-duration').textContent = selectedSvc.duration + ' минут';
+
+    /* Данные пользователя */
+    const fullName = [userName, userLastName].filter(Boolean).join(' ') || 'Пользователь Telegram';
+    document.getElementById('js-confirm-username').textContent = fullName;
+
+    if (userLogin) {
+      document.getElementById('js-confirm-tg-row').style.display = '';
+      document.getElementById('js-confirm-tg').textContent = '@' + userLogin;
+    } else {
+      document.getElementById('js-confirm-tg-row').style.display = 'none';
+    }
+
+    /* Прокрутка в начало */
+    document.getElementById('screen-confirm').scrollTop = 0;
+
+    goTo('confirm');
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ОТПРАВИТЬ ЗАЯВКУ (Экран 4 → 5)
+     tg.sendData() передаёт JSON боту через webhook.
+     Бот получает строку в поле message.web_app_data.data
+  ═══════════════════════════════════════════════════════════════════════ */
+  function sendBooking() {
+    if (!selectedSvc) return;
+
+    const payload = JSON.stringify({
+      service_name:     selectedSvc.name,
+      service_price:    selectedSvc.price,
+      service_duration: selectedSvc.duration,
+      user_id:          userId,
+      user_name:        [userName, userLastName].filter(Boolean).join(' '),
+      user_username:    userLogin
+    });
+
+    if (tg) {
+      tg.MainButton?.showProgress(false);
+      try {
+        /* sendData() закрывает TMA в Telegram — бот получит webhook */
+        tg.sendData(payload);
+      } catch (err) {
+        /* Если TMA открыта не через бота (например, прямая ссылка) — sendData бросит ошибку */
+        console.warn('sendData недоступен вне контекста бота:', err);
+      }
+    } else {
+      /* В браузере просто логируем */
+      console.log('Заявка (браузер):', payload);
+    }
+
+    /* В любом случае переходим на экран успеха */
+    goTo('success');
+  }
+</script>
+</body>
+</html>
