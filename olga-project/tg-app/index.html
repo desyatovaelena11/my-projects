@@ -722,11 +722,130 @@
     .offer-skip:active { opacity: 0.6; }
 
     .offer-overlay.hidden { display: none; }
+
+    /* ── Экран онбординга ──────────────────────────────────────────────── */
+    #screen-onboarding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 48px;
+      text-align: center;
+    }
+
+    .ob-emoji {
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: popIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .ob-hi {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .ob-title {
+      font-size: 15px;
+      color: var(--tg-theme-hint-color);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .ob-points {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 36px;
+      text-align: left;
+    }
+
+    .ob-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .ob-point-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .ob-point-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--tg-theme-text-color);
+    }
+
+    .ob-btn {
+      width: 100%;
+      height: 52px;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+
+    .ob-btn:active { opacity: 0.8; }
+
+    /* ── Кнопка «Поделиться» на главном экране ─────────────────────────── */
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: calc(100% - 32px);
+      margin: 12px 16px 24px;
+      height: 44px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 150ms;
+    }
+
+    .share-btn:active { opacity: 0.65; }
   </style>
 </head>
 
 <body>
 <div id="app">
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН ОНБОРДИНГА (первый визит)
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-onboarding">
+    <div class="ob-emoji">💅</div>
+    <div class="ob-hi" id="js-ob-hi">Привет!</div>
+    <div class="ob-title">Добро пожаловать к Ольге</div>
+    <div class="ob-points">
+      <div class="ob-point">
+        <span class="ob-point-icon">📋</span>
+        <span class="ob-point-text">Выбирай услугу и записывайся онлайн — за пару минут</span>
+      </div>
+      <div class="ob-point">
+        <span class="ob-point-icon">💬</span>
+        <span class="ob-point-text">Ольга подтвердит запись и согласует удобное время</span>
+      </div>
+      <div class="ob-point">
+        <span class="ob-point-icon">🎁</span>
+        <span class="ob-point-text">Подпишись на бота — получи скидку 15% на первую запись</span>
+      </div>
+    </div>
+    <button class="ob-btn" onclick="startApp()">Начать</button>
+  </div>
 
   <!-- ═══════════════════════════════════
        ЭКРАН-ОФФЕР (показывается один раз)
@@ -777,7 +896,9 @@
       </a>
     </div>
 
-    <div class="section-gap" style="margin-top:16px"></div>
+    <button class="share-btn" onclick="shareBot()">🔗 Поделиться с другом</button>
+
+    <div class="section-gap"></div>
     <div class="section-label">Категории</div>
 
     <div class="category-list">
@@ -1070,6 +1191,25 @@
     document.getElementById('fallback-ui').style.display = 'block';
   }
 
+  /* ── Онбординг: показать один раз при первом входе ─────────────────── */
+  const onboardingDone = !!localStorage.getItem('onboarding_done');
+
+  if (!onboardingDone) {
+    /* Показываем онбординг вместо home */
+    document.getElementById('screen-onboarding').style.transform = 'translateX(0)';
+    document.getElementById('screen-home').style.transform = 'translateX(100%)';
+    currentScreen = 'onboarding';
+    navStack = ['onboarding'];
+    /* Приветствие по имени */
+    const hi = userName ? ('Привет, ' + userName + '!') : 'Привет!';
+    document.getElementById('js-ob-hi').textContent = hi;
+  }
+
+  function startApp() {
+    localStorage.setItem('onboarding_done', '1');
+    showScreen('home', 'forward');
+  }
+
   /* ── Экран-оффер: показать один раз ────────────────────────────────── */
   function closeOffer() {
     document.getElementById('js-offer').classList.add('hidden');
@@ -1078,6 +1218,17 @@
 
   if (!localStorage.getItem('offer_shown')) {
     document.getElementById('js-offer').classList.remove('hidden');
+  }
+
+  /* ── Поделиться с другом ─────────────────────────────────────────── */
+  function shareBot() {
+    const url  = 'https://t.me/Ma_master_bot';
+    const text = 'Записалась на маникюр через Telegram — удобно! Попробуй 💅';
+    if (tg) {
+      tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text));
+    } else {
+      window.open('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text), '_blank');
+    }
   }
 
 
@@ -1151,6 +1302,13 @@
     const fbMain = document.getElementById('js-fb-main');
 
     switch (screen) {
+      case 'onboarding':
+        BB?.hide();
+        MB?.hide();
+        if (fbBack) fbBack.style.display = 'none';
+        if (fbMain) { fbMain.disabled = true; fbMain.textContent = '—'; }
+        break;
+
       case 'home':
         BB?.hide();
         MB?.hide();
