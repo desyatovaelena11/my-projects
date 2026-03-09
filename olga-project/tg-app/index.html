@@ -942,9 +942,6 @@
   const userLogin    = tgUser.username   || '';
   const userId       = tgUser.id         || 0;
 
-  /* Приветствие с именем пользователя */
-  document.getElementById('js-greeting').textContent =
-    userName ? `Привет, ${userName}! 👋` : 'Привет! 👋';
 
   /* Показываем fallback-кнопки если открыто в браузере */
   if (!inTelegram) {
