@@ -1102,10 +1102,13 @@
       const cat = catItem.dataset.cat;
       renderCatalog(cat);
       goTo('catalog');
-      /* Прокручиваем нужный чип в видимую область */
+      /* Прокручиваем только filter-bar, чтобы активный чип был виден */
       setTimeout(() => {
-        document.querySelector(`#js-filter-bar [data-filter="${cat}"]`)
-          ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+        const bar  = document.getElementById('js-filter-bar');
+        const chip = bar?.querySelector(`[data-filter="${cat}"]`);
+        if (bar && chip) {
+          bar.scrollLeft = chip.offsetLeft - 16; /* 16px — левый отступ bar */
+        }
       }, 260);
       return;
     }
