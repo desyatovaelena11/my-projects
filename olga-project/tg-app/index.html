@@ -1191,16 +1191,22 @@
     document.getElementById('fallback-ui').style.display = 'block';
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+  ═══════════════════════════════════════════════════════════════════════ */
+  let currentScreen  = 'home';   /* id текущего экрана (без 'screen-') */
+  let navStack       = ['home']; /* стек истории для BackButton         */
+  let selectedSvc    = null;     /* выбранная услуга                    */
+  let activeFilter   = 'all';    /* активный фильтр в каталоге          */
+
   /* ── Онбординг: показать один раз при первом входе ─────────────────── */
   const onboardingDone = !!localStorage.getItem('onboarding_done');
 
   if (!onboardingDone) {
-    /* Показываем онбординг вместо home */
     document.getElementById('screen-onboarding').style.transform = 'translateX(0)';
     document.getElementById('screen-home').style.transform = 'translateX(100%)';
     currentScreen = 'onboarding';
     navStack = ['onboarding'];
-    /* Приветствие по имени */
     const hi = userName ? ('Привет, ' + userName + '!') : 'Привет!';
     document.getElementById('js-ob-hi').textContent = hi;
   }
@@ -1230,15 +1236,6 @@
       window.open('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text), '_blank');
     }
   }
-
-
-  /* ═══════════════════════════════════════════════════════════════════════
-     СОСТОЯНИЕ ПРИЛОЖЕНИЯ
-  ═══════════════════════════════════════════════════════════════════════ */
-  let currentScreen  = 'home';   /* id текущего экрана (без 'screen-') */
-  let navStack       = ['home']; /* стек истории для BackButton         */
-  let selectedSvc    = null;     /* выбранная услуга                    */
-  let activeFilter   = 'all';    /* активный фильтр в каталоге          */
 
 
   /* ═══════════════════════════════════════════════════════════════════════
