@@ -196,10 +196,16 @@
     }
 
     .master-sub {
-      font-size: 14px;
-      color: var(--tg-theme-hint-color);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent);
       margin-bottom: 8px;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
+
+    .master-sub:active { opacity: 0.65; }
 
     /* Кнопки «Позвонить» и «Написать» */
     .contact-buttons {
@@ -222,7 +228,7 @@
       font-weight: 500;
       cursor: pointer;
       background: var(--tg-theme-secondary-bg-color);
-      color: var(--accent);
+      color: var(--tg-theme-text-color);
       transition: opacity 150ms;
       text-decoration: none;
     }
@@ -638,7 +644,7 @@
 
       <div class="master-name">Ольга · маникюр</div>
       <div class="master-city">📍 Ростов-на-Дону, ул. Мечникова, 135</div>
-      <div class="master-sub">Выбери услугу и запишись</div>
+      <div class="master-sub" onclick="renderCatalog('all'); goTo('catalog')">Выбери услугу и запишись</div>
       <div class="trust-badge">
         <span class="trust-stars">★★★★★</span>
         <span>5.0 · 5 000+ клиентов · 7 лет опыта</span>
