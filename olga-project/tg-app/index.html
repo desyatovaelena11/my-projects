@@ -623,11 +623,128 @@
 
     .fallback-main:active { opacity: 0.8; }
     .fallback-main:disabled { opacity: 0.4; cursor: default; }
+
+    /* ── Экран-оффер (модальное окно) ─────────────────────────────────── */
+    .offer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      opacity: 0;
+      animation: offerFadeIn 300ms ease-out 400ms forwards;
+    }
+
+    @keyframes offerFadeIn {
+      to { opacity: 1; }
+    }
+
+    .offer-card {
+      background: var(--tg-theme-bg-color);
+      border-radius: 20px;
+      padding: 32px 24px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      transform: translateY(40px);
+      opacity: 0;
+      animation: offerSlideUp 350ms cubic-bezier(0.34, 1.4, 0.64, 1) 500ms forwards;
+    }
+
+    @keyframes offerSlideUp {
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .offer-emoji {
+      font-size: 56px;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .offer-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .offer-sub {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .offer-bullets {
+      text-align: left;
+      margin-bottom: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .offer-bullet {
+      font-size: 14px;
+      color: var(--tg-theme-text-color);
+      line-height: 1.45;
+    }
+
+    .offer-btn {
+      display: block;
+      width: 100%;
+      min-height: 48px;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      line-height: 48px;
+      margin-bottom: 12px;
+      transition: opacity 150ms;
+    }
+
+    .offer-btn:active { opacity: 0.8; }
+
+    .offer-skip {
+      font-size: 13px;
+      color: var(--tg-theme-hint-color);
+      cursor: pointer;
+      padding: 4px;
+      display: inline-block;
+    }
+
+    .offer-skip:active { opacity: 0.6; }
+
+    .offer-overlay.hidden { display: none; }
   </style>
 </head>
 
 <body>
 <div id="app">
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН-ОФФЕР (показывается один раз)
+  ════════════════════════════════════ -->
+  <div class="offer-overlay hidden" id="js-offer">
+    <div class="offer-card">
+      <div class="offer-emoji">🎁</div>
+      <div class="offer-title">Скидка 15% на первую запись</div>
+      <div class="offer-sub">Подпишитесь на бота —<br>получите промокод в личное сообщение</div>
+      <div class="offer-bullets">
+        <div class="offer-bullet">• Напомним о записи за день</div>
+        <div class="offer-bullet">• Первыми узнаёте о свободных окошках</div>
+        <div class="offer-bullet">• Эксклюзивные акции для подписчиков</div>
+      </div>
+      <a class="offer-btn" href="https://t.me/Ma_master_bot?start=from_app" target="_blank" onclick="closeOffer()">Получить скидку 15%</a>
+      <span class="offer-skip" onclick="closeOffer()">Пропустить</span>
+    </div>
+  </div>
 
   <!-- ═══════════════════════════════════
        ЭКРАН 1 — Главный
@@ -951,6 +1068,16 @@
   /* Показываем fallback-кнопки если открыто в браузере */
   if (!inTelegram) {
     document.getElementById('fallback-ui').style.display = 'block';
+  }
+
+  /* ── Экран-оффер: показать один раз ────────────────────────────────── */
+  function closeOffer() {
+    document.getElementById('js-offer').classList.add('hidden');
+    localStorage.setItem('offer_shown', '1');
+  }
+
+  if (!localStorage.getItem('offer_shown')) {
+    document.getElementById('js-offer').classList.remove('hidden');
   }
 
 
