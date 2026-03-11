@@ -855,25 +855,26 @@
     <!-- Профиль мастера -->
     <div class="master-profile">
       <!-- Аватар: object-position подрезает до лица (верхняя часть фото) -->
-      <img src="olga.jpg.png" alt="Ольга"
+      <img src="olga.jpg.png" alt="Мастер"
+           id="js-master-avatar"
            class="master-avatar"
            style="object-fit:cover; object-position: center 15%;">
 
-      <div class="master-name">Ольга · мастер маникюра</div>
-      <div class="master-city">📍 Ростов-на-Дону, ул. Мечникова, 135</div>
+      <div class="master-name" id="js-master-name">Ольга · мастер маникюра</div>
+      <div class="master-city" id="js-master-city">📍 Ростов-на-Дону, ул. Мечникова, 135</div>
       <div class="master-sub" onclick="renderCatalog('all'); goTo('catalog')">Выбери услугу и запишись</div>
       <div class="trust-badge">
         <span class="trust-stars">★★★★★</span>
-        <span>5.0 · 5 000+ клиентов · 7 лет опыта</span>
+        <span id="js-trust-text">5.0 · 5 000+ клиентов · 7 лет опыта</span>
       </div>
     </div>
 
     <!-- Кнопки связи -->
     <div class="contact-buttons">
-      <a class="contact-btn" href="tel:+7XXXXXXXXXX">
+      <a class="contact-btn" id="js-phone-link" href="tel:+7XXXXXXXXXX">
         📞 Позвонить
       </a>
-      <a class="contact-btn" href="https://t.me/Pogorelova77" target="_blank">
+      <a class="contact-btn" id="js-tg-link" href="https://t.me/Pogorelova77" target="_blank">
         💬 Написать
       </a>
       <button class="contact-btn" onclick="shareBot()">👥 Поделиться</button>
@@ -1010,8 +1011,8 @@
     <div class="confirm-block" style="padding-bottom:80px">
       <div class="confirm-block-label">Что дальше</div>
       <div class="card">
-        <div class="confirm-info-text">
-          Ольга получит вашу заявку и напишет в Telegram, чтобы согласовать удобные дату и время.
+        <div class="confirm-info-text" id="js-confirm-info">
+          Мастер получит вашу заявку и напишет в Telegram, чтобы согласовать удобные дату и время.
           <br><br>
           Обычно отвечает в течение часа.
         </div>
@@ -1028,8 +1029,8 @@
     <div class="success-inner">
       <div class="success-icon">✅</div>
       <div class="success-title">Заявка отправлена!</div>
-      <div class="success-desc">
-        Ольга получила ваш запрос и напишет в Telegram в течение часа, чтобы назначить дату и время.
+      <div class="success-desc" id="js-success-desc">
+        Мастер получил ваш запрос и напишет в Telegram в течение часа, чтобы назначить дату и время.
       </div>
       <div class="success-hours">🕘 Работает пн–сб с 9:00 до 21:00</div>
     </div>
@@ -1059,7 +1060,7 @@
        popular     — true = бейдж «Хит»
        gradient    — CSS-градиент для фото-заглушки
   ═══════════════════════════════════════════════════════════════════════ */
-  const SERVICES = [
+  let SERVICES = [
     /* ── Маникюр ─────────────────────────────────────────────────────── */
     {
       id: 1, category: 'manicure', icon: '💅',
@@ -1166,6 +1167,109 @@
   const userLogin    = tgUser.username   || '';
   const userId       = tgUser.id         || 0;
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     API: загрузка данных мастера
+     slug берётся из start_param — параметра, с которым клиент открыл бота:
+       t.me/BotName/app?startapp=olga-manicure → start_param = "olga-manicure"
+     Если slug нет (открыто в браузере напрямую) — данные остаются дефолтными.
+  ═══════════════════════════════════════════════════════════════════════ */
+  /* URL сервера.
+     При локальном запуске: http://localhost:8000
+     После деплоя: заменить на реальный URL (например https://api.ma-master.ru) */
+  const API_BASE = 'https://155.212.139.51';
+
+  const masterSlug = tg?.initDataUnsafe?.start_param || null;
+
+  /* Данные профиля сохраняем — нужны в shareBot() */
+  let masterProfile = null;
+
+  async function loadMasterData() {
+    if (!masterSlug) return; /* нет slug — работаем с дефолтными данными */
+
+    try {
+      /* Загружаем профиль и услуги параллельно */
+      const [profileRes, servicesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/${masterSlug}/profile`),
+        fetch(`${API_BASE}/api/v1/${masterSlug}/services`),
+      ]);
+
+      if (!profileRes.ok || !servicesRes.ok) {
+        console.warn('API: ошибка загрузки данных мастера');
+        return;
+      }
+
+      const profile  = await profileRes.json();
+      const services = await servicesRes.json();
+      masterProfile = profile;
+
+      /* ── Обновляем профиль мастера в UI ─────────────────────────────── */
+      const nameEl = document.getElementById('js-master-name');
+      if (nameEl) nameEl.textContent = profile.name || nameEl.textContent;
+
+      const cityEl = document.getElementById('js-master-city');
+      if (cityEl) {
+        const parts = [profile.city, profile.address].filter(Boolean);
+        if (parts.length) cityEl.textContent = '📍 ' + parts.join(', ');
+      }
+
+      const avatarEl = document.getElementById('js-master-avatar');
+      if (avatarEl && profile.avatar_url) {
+        avatarEl.src = profile.avatar_url;
+        avatarEl.alt = profile.name || 'Мастер';
+      }
+
+      const trustEl = document.getElementById('js-trust-text');
+      if (trustEl && profile.trust_text) trustEl.textContent = profile.trust_text;
+
+      const phoneEl = document.getElementById('js-phone-link');
+      if (phoneEl && profile.phone) phoneEl.href = 'tel:' + profile.phone;
+
+      const tgEl = document.getElementById('js-tg-link');
+      if (tgEl && profile.telegram_username) {
+        tgEl.href = 'https://t.me/' + profile.telegram_username;
+      }
+
+      const confirmEl = document.getElementById('js-confirm-info');
+      if (confirmEl && profile.name) {
+        confirmEl.innerHTML = (
+          `${profile.name} получит вашу заявку и напишет в Telegram, `
+          + `чтобы согласовать удобные дату и время.<br><br>Обычно отвечает в течение часа.`
+        );
+      }
+
+      const successEl = document.getElementById('js-success-desc');
+      if (successEl && profile.name) {
+        successEl.textContent = (
+          `${profile.name} получил ваш запрос и напишет в Telegram `
+          + `в течение часа, чтобы назначить дату и время.`
+        );
+      }
+
+      /* ── Загружаем услуги в SERVICES ────────────────────────────────── */
+      if (services.length > 0) {
+        SERVICES = services.map(s => ({
+          id:       s.id,   /* UUID строка */
+          category: s.category || 'manicure',
+          icon:     s.icon || '💅',
+          name:     s.name,
+          desc:     s.description_short || '',
+          fullDesc: s.description_short || '',
+          price:    s.price,
+          duration: s.duration_min,
+          popular:  s.is_popular || false,
+          gradient: s.gradient || 'linear-gradient(135deg, #2a2a2a, #1a1a1a)',
+        }));
+        /* Перерисовываем каталог с данными из API */
+        renderCatalog(activeFilter);
+      }
+    } catch (err) {
+      console.warn('API недоступен, используем дефолтные данные:', err.message);
+    }
+  }
+
+  /* Запускаем загрузку данных — не ждём (async), UI не блокируется */
+  loadMasterData();
+
 
   /* Показываем fallback-кнопки если открыто в браузере */
   if (!inTelegram) {
@@ -1213,8 +1317,15 @@
 
   /* ── Поделиться с другом ─────────────────────────────────────────── */
   function shareBot() {
-    const url  = 'https://t.me/Ma_master_bot';
-    const text = 'Записалась на маникюр через Telegram — удобно! Попробуй 💅';
+    /* Формируем ссылку из данных профиля (bot_username + slug).
+       Если профиль ещё не загружен — используем дефолт. */
+    const botUsername = masterProfile?.bot_username || 'Ma_master_bot';
+    const slug        = masterProfile?.slug || masterSlug || '';
+    const url  = slug
+      ? `https://t.me/${botUsername}?startapp=${slug}`
+      : `https://t.me/${botUsername}`;
+    const masterName = masterProfile?.name || 'мастер';
+    const text = `Записалась к мастеру ${masterName} через Telegram — удобно! Попробуй 💅`;
     if (tg) {
       tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text));
     } else {
@@ -1425,7 +1536,7 @@
     /* Тап на строку услуги (Экран 2) */
     const svcRow = e.target.closest('.service-row');
     if (svcRow) {
-      openService(parseInt(svcRow.dataset.id));
+      openService(svcRow.dataset.id);
       tg?.HapticFeedback?.selectionChanged();
       return;
     }
@@ -1436,7 +1547,7 @@
      ОТКРЫТЬ КАРТОЧКУ УСЛУГИ (Экран 3)
   ═══════════════════════════════════════════════════════════════════════ */
   function openService(id) {
-    const svc = SERVICES.find(s => s.id === id);
+    const svc = SERVICES.find(s => String(s.id) === String(id));
     if (!svc) return;
     selectedSvc = svc;
 
@@ -1493,9 +1604,11 @@
     if (!selectedSvc) return;
 
     const payload = JSON.stringify({
+      service_id:       selectedSvc.id,
       service_name:     selectedSvc.name,
       service_price:    selectedSvc.price,
       service_duration: selectedSvc.duration,
+      master_slug:      masterSlug || masterProfile?.slug || '',
       user_id:          userId,
       user_name:        [userName, userLastName].filter(Boolean).join(' '),
       user_username:    userLogin
