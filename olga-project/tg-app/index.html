@@ -1634,22 +1634,21 @@
       user_username:    userLogin
     });
 
+    /* Сначала показываем экран успеха, потом sendData() закрывает TMA.
+       Порядок важен: sendData() закрывает приложение немедленно,
+       поэтому goTo('success') должен идти до него. */
+    goTo('success');
+
     if (tg) {
       tg.MainButton?.showProgress(false);
       try {
-        /* sendData() закрывает TMA в Telegram — бот получит webhook */
         tg.sendData(payload);
       } catch (err) {
-        /* Если TMA открыта не через бота (например, прямая ссылка) — sendData бросит ошибку */
         console.warn('sendData недоступен вне контекста бота:', err);
       }
     } else {
-      /* В браузере просто логируем */
       console.log('Заявка (браузер):', payload);
     }
-
-    /* В любом случае переходим на экран успеха */
-    goTo('success');
   }
 </script>
 </body>

@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -93,6 +93,8 @@ async def update_profile(
     master = await _get_master(db)
 
     if body.name is not None:
+        if not body.name.strip():
+            raise HTTPException(status_code=400, detail="Имя не может быть пустым")
         master.name = body.name
     if body.specialty is not None:
         master.specialty = body.specialty
@@ -151,10 +153,10 @@ async def get_services(
 
 class ServiceCreate(BaseModel):
     category: str = "manicure"
-    name: str
+    name: str = Field(..., min_length=1, max_length=256)
     description_short: str | None = None
-    price: int
-    duration_min: int
+    price: int = Field(..., ge=0)
+    duration_min: int = Field(..., gt=0)
     icon: str | None = "💅"
     gradient: str | None = "linear-gradient(135deg, #2a2a2a, #1a1a1a)"
     is_popular: bool = False
