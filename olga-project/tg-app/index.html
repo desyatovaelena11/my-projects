@@ -1186,9 +1186,11 @@
   /* URL сервера.
      При локальном запуске: http://localhost:8000
      После деплоя: заменить на реальный URL (например https://api.ma-master.ru) */
-  const API_BASE = 'https://155.212.139.51';
+  const API_BASE = 'https://155.212.139.51.nip.io';
 
-  const masterSlug = tg?.initDataUnsafe?.start_param || null;
+  const masterSlug = tg?.initDataUnsafe?.start_param
+    || new URLSearchParams(window.location.search).get('startapp')
+    || null;
 
   /* Данные профиля сохраняем — нужны в shareBot() */
   let masterProfile = null;
