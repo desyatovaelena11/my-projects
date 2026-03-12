@@ -1423,8 +1423,10 @@
       case 'catalog':
         BB?.show();
         MB?.hide();
-        if (fbBack) fbBack.style.display = '';
-        if (fbMain) { fbMain.disabled = true; fbMain.textContent = 'Выберите услугу'; }
+        if (!inTelegram) {
+          if (fbBack) fbBack.style.display = '';
+          if (fbMain) { fbMain.disabled = true; fbMain.textContent = 'Выберите услугу'; }
+        }
         break;
 
       case 'service':
@@ -1432,8 +1434,10 @@
         MB?.setText('Записаться');
         MB?.show();
         MB?.enable();
-        if (fbBack) fbBack.style.display = '';
-        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Записаться'; }
+        if (!inTelegram) {
+          if (fbBack) fbBack.style.display = '';
+          if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Записаться'; }
+        }
         break;
 
       case 'confirm':
@@ -1442,8 +1446,10 @@
         MB?.show();
         MB?.enable();
         tg?.enableClosingConfirmation?.();
-        if (fbBack) fbBack.style.display = '';
-        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Отправить заявку'; }
+        if (!inTelegram) {
+          if (fbBack) fbBack.style.display = '';
+          if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Отправить заявку'; }
+        }
         break;
 
       case 'success':
@@ -1453,8 +1459,10 @@
         MB?.enable();
         tg?.disableClosingConfirmation?.();
         tg?.HapticFeedback?.notificationOccurred('success');
-        if (fbBack) fbBack.style.display = 'none';
-        if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Готово'; }
+        if (!inTelegram) {
+          if (fbBack) fbBack.style.display = 'none';
+          if (fbMain) { fbMain.disabled = false; fbMain.textContent = 'Готово'; }
+        }
         break;
     }
   }
