@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Панель мастера</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d0d0d;
+      --bg2:     #1a1a1a;
+      --bg3:     #242424;
+      --border:  #2e2e2e;
+      --text:    #f0f0f0;
+      --hint:    #888;
+      --accent:  #ff7a00;
+      --danger:  #e53e3e;
+      --success: #38a169;
+      --radius:  12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 80px; }
+
+    /* ── Экраны ─────────────────────────────────────────────────────── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Вход ───────────────────────────────────────────────────────── */
+    .login-box {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 16px; padding: 32px 16px;
+    }
+    .login-box h1 { font-size: 24px; font-weight: 700; }
+    .login-box p  { color: var(--hint); text-align: center; font-size: 14px; }
+    .login-box input {
+      width: 100%; max-width: 360px; padding: 14px 16px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 15px;
+      outline: none;
+    }
+    .login-box input:focus { border-color: var(--accent); }
+    .error-text { color: var(--danger); font-size: 13px; min-height: 18px; }
+
+    /* ── Шапка ──────────────────────────────────────────────────────── */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .header-name { font-weight: 600; font-size: 16px; }
+
+    /* ── Табы ───────────────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+    .tab-btn {
+      flex: 1; padding: 10px; background: var(--bg2); border: none;
+      border-radius: var(--radius); color: var(--hint); font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Формы ──────────────────────────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; color: var(--hint); margin-bottom: 6px; }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 15px;
+      outline: none; font-family: inherit;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field select option { background: var(--bg2); }
+
+    .field-row { display: flex; gap: 12px; }
+    .field-row .field { flex: 1; }
+
+    .checkbox-field {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px; cursor: pointer;
+    }
+    .checkbox-field input[type=checkbox] {
+      width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+    }
+    .checkbox-field span { font-size: 14px; }
+
+    /* ── Кнопки ─────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 12px 20px; border: none; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--bg3); color: var(--text); }
+    .btn-danger    { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 7px 14px; font-size: 13px; }
+    .btn-full { width: 100%; }
+
+    /* ── Список услуг ───────────────────────────────────────────────── */
+    .services-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .services-header h2 { font-size: 16px; font-weight: 600; }
+
+    .service-card {
+      background: var(--bg2); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+    }
+    .service-card-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .service-card-info { flex: 1; }
+    .service-card-name {
+      font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 6px;
+    }
+    .service-card-meta {
+      font-size: 13px; color: var(--hint); margin-top: 4px;
+    }
+    .service-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-popular  { background: rgba(255,122,0,0.2); color: var(--accent); }
+    .badge-inactive { background: rgba(136,136,136,0.2); color: var(--hint); }
+    .badge-cat      { background: var(--bg3); color: var(--hint); }
+
+    /* ── Экран формы услуги ─────────────────────────────────────────── */
+    .form-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .form-header h2 { font-size: 18px; font-weight: 700; }
+    .form-header .back-link {
+      color: var(--accent); font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+
+    /* ── Toast ──────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 20px; border-radius: var(--radius);
+      font-size: 14px; font-weight: 500; opacity: 0;
+      transition: opacity 0.25s; pointer-events: none; z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { border-color: var(--success); color: var(--success); }
+    #toast.err { border-color: var(--danger);  color: var(--danger); }
+
+    /* ── Пустой список ──────────────────────────────────────────────── */
+    .empty { text-align: center; color: var(--hint); padding: 40px 0; font-size: 14px; }
+
+    /* ── Работает часы: поле JSON ───────────────────────────────────── */
+    .hint-text { font-size: 12px; color: var(--hint); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Экран 1: Вход
+══════════════════════════════════════════════════════════════ -->
+<div id="screen-login" class="screen">
+  <div class="login-box">
+    <h1>Панель мастера</h1>
+    <p>Введите токен доступа, который вам выдали при настройке</p>
+    <input id="token-input" type="password" placeholder="Токен доступа" autocomplete="current-password">
+    <div id="login-error" class="error-text"></div>
+    <button class="btn btn-primary btn-full" style="max-width:360px" onclick="login()">Войти</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Экран 2: Главный (профиль + услуги)
+══════════════════════════════════════════════════════════════ -->
+<div id="screen-main" class="screen">
+  <div class="wrap">
+    <div class="header">
+      <span class="header-name" id="master-name-header">Загрузка…</span>
+      <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('profile')">Профиль</button>
+      <button class="tab-btn"        onclick="showTab('services')">Услуги</button>
+    </div>
+
+    <!-- Таб: Профиль -->
+    <div id="tab-profile" class="tab-content active">
+      <div class="field">
+        <label>Имя и должность</label>
+        <input id="p-name" type="text" placeholder="Ольга · мастер маникюра">
+      </div>
+      <div class="field">
+        <label>Специальность</label>
+        <input id="p-specialty" type="text" placeholder="Мастер ногтевого сервиса">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Город</label>
+          <input id="p-city" type="text" placeholder="Ростов-на-Дону">
+        </div>
+        <div class="field">
+          <label>Отмена за (часов)</label>
+          <input id="p-cancellation" type="number" min="0" max="48" placeholder="2">
+        </div>
+      </div>
+      <div class="field">
+        <label>Адрес</label>
+        <input id="p-address" type="text" placeholder="ул. Мечникова, 135">
+      </div>
+      <div class="field">
+        <label>Телефон</label>
+        <input id="p-phone" type="tel" placeholder="+79001234567">
+      </div>
+      <div class="field">
+        <label>О себе</label>
+        <textarea id="p-bio" rows="4" placeholder="Расскажите о себе…"></textarea>
+      </div>
+      <div class="field">
+        <label>Строка доверия</label>
+        <input id="p-trust" type="text" placeholder="5.0 · 2000+ клиентов · 5 лет">
+        <div class="hint-text">Показывается под фото на главном экране TMA</div>
+      </div>
+      <div class="field">
+        <label>Часы работы (JSON)</label>
+        <textarea id="p-hours" rows="9" placeholder='{"mon":"9:00-21:00","tue":"9:00-21:00","wed":"9:00-21:00","thu":"9:00-21:00","fri":"9:00-21:00","sat":"10:00-18:00","sun":null}'></textarea>
+        <div class="hint-text">mon/tue/wed/thu/fri/sat/sun — null означает выходной</div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Сохранить профиль</button>
+    </div>
+
+    <!-- Таб: Услуги -->
+    <div id="tab-services" class="tab-content">
+      <div class="services-header">
+        <h2>Услуги</h2>
+        <button class="btn btn-primary btn-sm" onclick="openServiceForm(null)">+ Добавить</button>
+      </div>
+      <div id="services-list"><div class="empty">Загрузка…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     Экран 3: Форма услуги
+══════════════════════════════════════════════════════════════ -->
+<div id="screen-service-form" class="screen">
+  <div class="wrap">
+    <div class="form-header">
+      <span class="back-link" onclick="closeServiceForm()">← Назад</span>
+      <h2 id="form-title">Новая услуга</h2>
+    </div>
+
+    <div class="field">
+      <label>Категория</label>
+      <select id="s-category">
+        <option value="manicure">💅 Маникюр</option>
+        <option value="pedicure">🦶 Педикюр</option>
+        <option value="design">✨ Дизайн</option>
+        <option value="extension">💎 Наращивание</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Название *</label>
+      <input id="s-name" type="text" placeholder="Маникюр с гель-лаком">
+    </div>
+    <div class="field">
+      <label>Описание</label>
+      <textarea id="s-desc" rows="3" placeholder="Короткое описание услуги…"></textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Цена (₽) *</label>
+        <input id="s-price" type="number" min="0" placeholder="1500">
+      </div>
+      <div class="field">
+        <label>Длительность (мин) *</label>
+        <input id="s-duration" type="number" min="15" step="15" placeholder="90">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Иконка (эмодзи)</label>
+        <input id="s-icon" type="text" placeholder="💅" maxlength="4">
+      </div>
+      <div class="field">
+        <label>Цвет фона</label>
+        <input id="s-gradient" type="text" placeholder="linear-gradient(135deg, #2a2a2a, #1a1a1a)">
+      </div>
+    </div>
+    <label class="checkbox-field">
+      <input id="s-popular" type="checkbox">
+      <span>Хит продаж (показывать бейдж)</span>
+    </label>
+    <label class="checkbox-field">
+      <input id="s-active" type="checkbox" checked>
+      <span>Услуга активна (видна клиентам)</span>
+    </label>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveService()">Сохранить</button>
+      <button class="btn btn-secondary" onclick="closeServiceForm()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'https://155.212.139.51.nip.io';
+
+  const S = {
+    token: localStorage.getItem('admin_token') || null,
+    slug:  localStorage.getItem('admin_slug')  || null,
+    editingId: null,
+  };
+
+  /* ── Инициализация ──────────────────────────────────────────── */
+  function init() {
+    if (S.token) {
+      showScreen('main');
+      document.getElementById('master-name-header').textContent = localStorage.getItem('admin_name') || '';
+      loadProfile();
+      loadServices();
+    } else {
+      showScreen('login');
+    }
+  }
+
+  /* ── Навигация ──────────────────────────────────────────────── */
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+  }
+
+  function showTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', ['profile','services'][i] === name);
+    });
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  /* ── Вход / выход ───────────────────────────────────────────── */
+  async function login() {
+    const token = document.getElementById('token-input').value.trim();
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    if (!token) { errEl.textContent = 'Введите токен'; return; }
+
+    try {
+      const r = await api('POST', '/admin/auth/login', { token }, false);
+      S.token = token;
+      S.slug  = r.slug;
+      localStorage.setItem('admin_token', token);
+      localStorage.setItem('admin_slug',  r.slug);
+      localStorage.setItem('admin_name',  r.name);
+      document.getElementById('master-name-header').textContent = r.name;
+      showScreen('main');
+      loadProfile();
+      loadServices();
+    } catch {
+      errEl.textContent = 'Неверный токен';
+    }
+  }
+
+  document.getElementById('token-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  function logout() {
+    localStorage.clear();
+    S.token = null; S.slug = null;
+    showScreen('login');
+    document.getElementById('token-input').value = '';
+  }
+
+  /* ── API helper ─────────────────────────────────────────────── */
+  async function api(method, path, body, auth = true) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (auth) headers['X-Admin-Token'] = S.token;
+    const r = await fetch(API + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (r.status === 401) { logout(); throw new Error('401'); }
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
+
+  /* ── Toast ──────────────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg, ok = true) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + (ok ? 'ok' : 'err');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  /* ── Профиль ────────────────────────────────────────────────── */
+  async function loadProfile() {
+    try {
+      const p = await api('GET', '/admin/profile');
+      document.getElementById('p-name').value         = p.name || '';
+      document.getElementById('p-specialty').value    = p.specialty || '';
+      document.getElementById('p-city').value         = p.city || '';
+      document.getElementById('p-address').value      = p.address || '';
+      document.getElementById('p-phone').value        = p.phone || '';
+      document.getElementById('p-bio').value          = p.bio || '';
+      document.getElementById('p-trust').value        = p.trust_text || '';
+      document.getElementById('p-cancellation').value = p.cancellation_hours ?? 2;
+      document.getElementById('p-hours').value        =
+        p.working_hours ? JSON.stringify(p.working_hours, null, 2) : '';
+    } catch {
+      showToast('Ошибка загрузки профиля', false);
+    }
+  }
+
+  async function saveProfile() {
+    const hoursRaw = document.getElementById('p-hours').value.trim();
+    let working_hours = null;
+    if (hoursRaw) {
+      try { working_hours = JSON.parse(hoursRaw); }
+      catch { showToast('Часы работы: неверный JSON', false); return; }
+    }
+
+    try {
+      const r = await api('PUT', '/admin/profile', {
+        name:               document.getElementById('p-name').value.trim(),
+        specialty:          document.getElementById('p-specialty').value.trim(),
+        city:               document.getElementById('p-city').value.trim(),
+        address:            document.getElementById('p-address').value.trim(),
+        phone:              document.getElementById('p-phone').value.trim(),
+        bio:                document.getElementById('p-bio').value.trim(),
+        trust_text:         document.getElementById('p-trust').value.trim(),
+        cancellation_hours: parseInt(document.getElementById('p-cancellation').value) || 2,
+        working_hours,
+      });
+      document.getElementById('master-name-header').textContent =
+        document.getElementById('p-name').value.trim();
+      localStorage.setItem('admin_name', document.getElementById('p-name').value.trim());
+      showToast('Профиль сохранён ✓');
+    } catch {
+      showToast('Ошибка сохранения', false);
+    }
+  }
+
+  /* ── Услуги ─────────────────────────────────────────────────── */
+  const CAT_LABELS = {
+    manicure:  '💅 Маникюр',
+    pedicure:  '🦶 Педикюр',
+    design:    '✨ Дизайн',
+    extension: '💎 Наращивание',
+  };
+
+  async function loadServices() {
+    const el = document.getElementById('services-list');
+    try {
+      const list = await api('GET', '/admin/services');
+      if (!list.length) {
+        el.innerHTML = '<div class="empty">Услуг пока нет.<br>Нажмите «+ Добавить», чтобы создать первую.</div>';
+        return;
+      }
+      el.innerHTML = list.map(s => `
+        <div class="service-card">
+          <div class="service-card-top">
+            <div class="service-card-info">
+              <div class="service-card-name">
+                ${s.icon || '💅'} ${escHtml(s.name)}
+                ${s.is_popular ? '<span class="badge badge-popular">Хит</span>' : ''}
+                ${!s.is_active ? '<span class="badge badge-inactive">Скрыта</span>' : ''}
+              </div>
+              <div class="service-card-meta">
+                <span class="badge badge-cat">${CAT_LABELS[s.category] || s.category}</span>
+                &nbsp;${s.price.toLocaleString('ru-RU')} ₽ · ${s.duration_min} мин
+              </div>
+              ${s.description_short ? `<div style="font-size:13px;color:var(--hint);margin-top:6px">${escHtml(s.description_short)}</div>` : ''}
+            </div>
+            <div class="service-card-actions">
+              <button class="btn btn-secondary btn-sm" onclick="openServiceForm('${s.id}')">Изменить</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteService('${s.id}', '${escHtml(s.name)}')">Удалить</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    } catch {
+      el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Форма услуги ───────────────────────────────────────────── */
+  let _services_cache = [];
+
+  async function openServiceForm(id) {
+    S.editingId = id;
+    document.getElementById('form-title').textContent = id ? 'Изменить услугу' : 'Новая услуга';
+
+    if (id) {
+      // Загружаем данные конкретной услуги
+      try {
+        const list = await api('GET', '/admin/services');
+        const s = list.find(x => x.id === id);
+        if (s) {
+          document.getElementById('s-category').value = s.category || 'manicure';
+          document.getElementById('s-name').value     = s.name;
+          document.getElementById('s-desc').value     = s.description_short || '';
+          document.getElementById('s-price').value    = s.price;
+          document.getElementById('s-duration').value = s.duration_min;
+          document.getElementById('s-icon').value     = s.icon || '';
+          document.getElementById('s-gradient').value = s.gradient || '';
+          document.getElementById('s-popular').checked = s.is_popular;
+          document.getElementById('s-active').checked  = s.is_active;
+        }
+      } catch { showToast('Ошибка загрузки услуги', false); return; }
+    } else {
+      // Очищаем форму
+      document.getElementById('s-category').value = 'manicure';
+      document.getElementById('s-name').value     = '';
+      document.getElementById('s-desc').value     = '';
+      document.getElementById('s-price').value    = '';
+      document.getElementById('s-duration').value = '';
+      document.getElementById('s-icon').value     = '💅';
+      document.getElementById('s-gradient').value = 'linear-gradient(135deg, #2a2a2a, #1a1a1a)';
+      document.getElementById('s-popular').checked = false;
+      document.getElementById('s-active').checked  = true;
+    }
+
+    showScreen('service-form');
+  }
+
+  function closeServiceForm() {
+    showScreen('main');
+    showTab('services');
+  }
+
+  async function saveService() {
+    const name = document.getElementById('s-name').value.trim();
+    const price = parseInt(document.getElementById('s-price').value);
+    const duration = parseInt(document.getElementById('s-duration').value);
+
+    if (!name) { showToast('Введите название', false); return; }
+    if (!price || price < 0) { showToast('Введите цену', false); return; }
+    if (!duration || duration < 1) { showToast('Введите длительность', false); return; }
+
+    const body = {
+      category:          document.getElementById('s-category').value,
+      name,
+      description_short: document.getElementById('s-desc').value.trim() || null,
+      price,
+      duration_min:      duration,
+      icon:              document.getElementById('s-icon').value.trim() || '💅',
+      gradient:          document.getElementById('s-gradient').value.trim() || null,
+      is_popular:        document.getElementById('s-popular').checked,
+      is_active:         document.getElementById('s-active').checked,
+    };
+
+    try {
+      if (S.editingId) {
+        await api('PUT', `/admin/services/${S.editingId}`, body);
+        showToast('Услуга обновлена ✓');
+      } else {
+        await api('POST', '/admin/services', body);
+        showToast('Услуга добавлена ✓');
+      }
+      closeServiceForm();
+      loadServices();
+    } catch {
+      showToast('Ошибка сохранения', false);
+    }
+  }
+
+  async function deleteService(id, name) {
+    if (!confirm(`Удалить услугу «${name}»?`)) return;
+    try {
+      await api('DELETE', `/admin/services/${id}`);
+      showToast('Удалено ✓');
+      loadServices();
+    } catch {
+      showToast('Ошибка удаления', false);
+    }
+  }
+
+  /* ── Старт ──────────────────────────────────────────────────── */
+  init();
+</script>
+</body>
+</html>

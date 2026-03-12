@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.public import router as public_router
+from api.admin import router as admin_router
 from webhooks.telegram import router as webhook_router
 
 app = FastAPI(
@@ -34,6 +35,9 @@ app.add_middleware(
 
 # Публичные эндпоинты (/api/v1/{slug}/...)
 app.include_router(public_router)
+
+# Панель мастера (/admin/...)
+app.include_router(admin_router)
 
 # Webhook для Telegram-ботов (/webhook/telegram/{bot_token})
 app.include_router(webhook_router)
