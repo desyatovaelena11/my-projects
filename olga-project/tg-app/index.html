@@ -1121,7 +1121,7 @@
       <div class="confirm-block-label">Что дальше</div>
       <div class="card">
         <div class="confirm-info-text" id="js-confirm-info">
-          Мастер получит вашу заявку и напишет в Telegram, чтобы согласовать удобные дату и время.
+          Мастер получит заявку и напишет в Telegram, чтобы подтвердить выбранное время.
           <br><br>
           Обычно отвечает в течение часа.
         </div>
@@ -1149,7 +1149,7 @@
       <div class="success-icon">✅</div>
       <div class="success-title">Заявка отправлена!</div>
       <div class="success-desc" id="js-success-desc">
-        Мастер получил ваш запрос и напишет в Telegram в течение часа, чтобы назначить дату и время.
+        Мастер получила заявку и скоро напишет в Telegram, чтобы подтвердить запись.
       </div>
       <div class="success-hours">🕘 Работает пн–сб с 9:00 до 21:00</div>
     </div>
@@ -1353,16 +1353,16 @@
       const confirmEl = document.getElementById('js-confirm-info');
       if (confirmEl && profile.name) {
         confirmEl.innerHTML = (
-          `${profile.name} получит вашу заявку и напишет в Telegram, `
-          + `чтобы согласовать удобные дату и время.<br><br>Обычно отвечает в течение часа.`
+          `${profile.name} получит заявку и напишет в Telegram, `
+          + `чтобы подтвердить выбранное время.<br><br>Обычно отвечает в течение часа.`
         );
       }
 
       const successEl = document.getElementById('js-success-desc');
       if (successEl && profile.name) {
         successEl.textContent = (
-          `${profile.name} получил ваш запрос и напишет в Telegram `
-          + `в течение часа, чтобы назначить дату и время.`
+          `${profile.name} получила заявку и скоро напишет в Telegram, `
+          + `чтобы подтвердить запись.`
         );
       }
 
