@@ -798,6 +798,88 @@
 
     .ob-btn:active { opacity: 0.8; }
 
+    /* ── Экран выбора даты и времени ──────────────────────────────────── */
+    .date-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 16px;
+      scrollbar-width: none;
+    }
+    .date-strip::-webkit-scrollbar { display: none; }
+
+    .date-chip {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      border: 1.5px solid rgba(128,128,128,0.2);
+      background: var(--tg-theme-secondary-bg-color);
+      cursor: pointer;
+      transition: all 150ms;
+      min-width: 56px;
+    }
+    .date-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .date-chip.disabled {
+      opacity: 0.3;
+      cursor: default;
+      pointer-events: none;
+    }
+    .date-chip-day { font-size: 11px; font-weight: 600; color: var(--tg-theme-hint-color); text-transform: uppercase; }
+    .date-chip.active .date-chip-day { color: rgba(255,255,255,0.8); }
+    .date-chip-num { font-size: 18px; font-weight: 700; }
+    .date-chip-mon { font-size: 11px; color: var(--tg-theme-hint-color); }
+    .date-chip.active .date-chip-mon { color: rgba(255,255,255,0.8); }
+
+    .time-section-label {
+      padding: 4px 16px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding: 0 16px 100px;
+    }
+
+    .time-btn {
+      padding: 12px 4px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid rgba(128,128,128,0.2);
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 150ms;
+      text-align: center;
+    }
+    .time-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .time-btn:active { opacity: 0.75; }
+
+    .datetime-closed {
+      grid-column: 1 / -1;
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--tg-theme-hint-color);
+      font-size: 15px;
+    }
 
   </style>
 </head>
@@ -965,7 +1047,26 @@
 
 
   <!-- ═══════════════════════════════════
-       ЭКРАН 4 — Подтверждение
+       ЭКРАН 4 — Выбор даты и времени
+  ════════════════════════════════════ -->
+  <div class="screen" id="screen-datetime">
+
+    <div class="screen-header">
+      <div class="screen-title">Дата и время</div>
+    </div>
+
+    <!-- Горизонтальная полоса дат (14 дней вперёд) -->
+    <div class="date-strip" id="js-date-strip"></div>
+
+    <!-- Сетка слотов времени -->
+    <div class="time-section-label">Доступное время</div>
+    <div class="time-grid" id="js-time-grid"></div>
+
+  </div><!-- /screen-datetime -->
+
+
+  <!-- ═══════════════════════════════════
+       ЭКРАН 5 — Подтверждение
   ════════════════════════════════════ -->
   <div class="screen" id="screen-confirm">
 
@@ -988,6 +1089,14 @@
         <div class="card-row">
           <div class="card-label">Длительность</div>
           <div class="card-value" id="js-confirm-duration"></div>
+        </div>
+        <div class="card-row">
+          <div class="card-label">Дата</div>
+          <div class="card-value" id="js-confirm-date"></div>
+        </div>
+        <div class="card-row">
+          <div class="card-label">Время</div>
+          <div class="card-value" id="js-confirm-time"></div>
         </div>
       </div>
     </div>
@@ -1291,10 +1400,11 @@
   /* ═══════════════════════════════════════════════════════════════════════
      СОСТОЯНИЕ ПРИЛОЖЕНИЯ
   ═══════════════════════════════════════════════════════════════════════ */
-  let currentScreen  = 'home';   /* id текущего экрана (без 'screen-') */
-  let navStack       = ['home']; /* стек истории для BackButton         */
-  let selectedSvc    = null;     /* выбранная услуга                    */
-  let activeFilter   = 'all';    /* активный фильтр в каталоге          */
+  let currentScreen    = 'home';   /* id текущего экрана (без 'screen-') */
+  let navStack         = ['home']; /* стек истории для BackButton         */
+  let selectedSvc      = null;     /* выбранная услуга                    */
+  let activeFilter     = 'all';    /* активный фильтр в каталоге          */
+  let selectedDateTime = null;     /* { date: 'YYYY-MM-DD', time: '14:00', label: '15 марта в 14:00' } */
 
   /* ── Онбординг: показать один раз при первом входе ─────────────────── */
   const onboardingDone = !!localStorage.getItem('onboarding_done');
@@ -1431,6 +1541,17 @@
         }
         break;
 
+      case 'datetime':
+        BB?.show();
+        MB?.setText('Выберите время');
+        MB?.show();
+        MB?.disable();
+        if (!inTelegram) {
+          if (fbBack) fbBack.style.display = '';
+          if (fbMain) { fbMain.disabled = true; fbMain.textContent = 'Выберите время'; }
+        }
+        break;
+
       case 'service':
         BB?.show();
         MB?.setText('Записаться');
@@ -1474,7 +1595,8 @@
     tg.BackButton?.onClick(goBack);
 
     tg.MainButton?.onClick(() => {
-      if (currentScreen === 'service')  { tg.HapticFeedback?.impactOccurred('light'); openConfirm(); }
+      if (currentScreen === 'service')  { tg.HapticFeedback?.impactOccurred('light'); openDatetime(); }
+      if (currentScreen === 'datetime') { if (selectedDateTime?.time) openConfirm(); }
       if (currentScreen === 'confirm')  { sendBooking(); }
       if (currentScreen === 'success')  { tg.close(); }
     });
@@ -1482,7 +1604,8 @@
 
   /* Fallback MainButton (браузер) */
   document.getElementById('js-fb-main')?.addEventListener('click', () => {
-    if (currentScreen === 'service')  openConfirm();
+    if (currentScreen === 'service')  openDatetime();
+    if (currentScreen === 'datetime') { if (selectedDateTime?.time) openConfirm(); }
     if (currentScreen === 'confirm')  sendBooking();
     if (currentScreen === 'success')  alert('В Telegram нажмите «Готово» чтобы закрыть приложение');
   });
@@ -1587,7 +1710,134 @@
 
 
   /* ═══════════════════════════════════════════════════════════════════════
-     ОТКРЫТЬ ПОДТВЕРЖДЕНИЕ (Экран 4)
+     ОТКРЫТЬ ВЫБОР ДАТЫ И ВРЕМЕНИ (Экран 4)
+  ═══════════════════════════════════════════════════════════════════════ */
+  function openDatetime() {
+    if (!selectedSvc) return;
+    selectedDateTime = null;
+    renderDateStrip();
+    document.getElementById('screen-datetime').scrollTop = 0;
+    goTo('datetime');
+  }
+
+  function renderDateStrip() {
+    const strip     = document.getElementById('js-date-strip');
+    const DAY_KEYS  = ['sun','mon','tue','wed','thu','fri','sat'];
+    const DAY_NAMES = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const MON_NAMES = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const wh = masterProfile?.working_hours || {
+      mon:'9:00-21:00', tue:'9:00-21:00', wed:'9:00-21:00',
+      thu:'9:00-21:00', fri:'9:00-21:00', sat:'10:00-18:00', sun: null
+    };
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let firstDate = null;
+    const chips = [];
+
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const key      = DAY_KEYS[d.getDay()];
+      const closed   = !wh[key];
+      const dateStr  = d.toISOString().slice(0,10);
+      if (!closed && !firstDate) firstDate = dateStr;
+
+      chips.push(`
+        <div class="date-chip ${closed ? 'disabled' : ''}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">
+          <div class="date-chip-day">${DAY_NAMES[d.getDay()]}</div>
+          <div class="date-chip-num">${d.getDate()}</div>
+          <div class="date-chip-mon">${MON_NAMES[d.getMonth()]}</div>
+        </div>`);
+    }
+
+    strip.innerHTML = chips.join('');
+    if (firstDate) selectDate(firstDate);
+  }
+
+  function selectDate(dateStr) {
+    document.querySelectorAll('.date-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.date === dateStr);
+    });
+    if (selectedDateTime) selectedDateTime = null;
+    updateDatetimeButton();
+    renderTimeSlots(dateStr);
+  }
+
+  function renderTimeSlots(dateStr) {
+    const grid    = document.getElementById('js-time-grid');
+    const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
+    const wh = masterProfile?.working_hours || {
+      mon:'9:00-21:00', tue:'9:00-21:00', wed:'9:00-21:00',
+      thu:'9:00-21:00', fri:'9:00-21:00', sat:'10:00-18:00', sun: null
+    };
+
+    const d    = new Date(dateStr + 'T00:00:00');
+    const key  = DAY_KEYS[d.getDay()];
+    const hours = wh[key];
+
+    if (!hours) {
+      grid.innerHTML = '<div class="datetime-closed">В этот день не работает</div>';
+      return;
+    }
+
+    const [startStr, endStr] = hours.split('-');
+    const [startH, startM]   = startStr.split(':').map(Number);
+    const [endH,   endM]     = endStr.split(':').map(Number);
+    const duration = selectedSvc?.duration || 60;
+
+    const slots = [];
+    let cur = startH * 60 + startM;
+    const end = endH * 60 + endM;
+
+    while (cur + duration <= end) {
+      const h = Math.floor(cur / 60).toString().padStart(2,'0');
+      const m = (cur % 60).toString().padStart(2,'0');
+      slots.push(`${h}:${m}`);
+      cur += duration;
+    }
+
+    if (!slots.length) {
+      grid.innerHTML = '<div class="datetime-closed">Нет свободного времени</div>';
+      return;
+    }
+
+    grid.innerHTML = slots.map(t =>
+      `<button class="time-btn" data-time="${t}" onclick="selectTime('${dateStr}','${t}')">${t}</button>`
+    ).join('');
+  }
+
+  function selectTime(dateStr, time) {
+    document.querySelectorAll('.time-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.time === time);
+    });
+
+    const MON_NAMES = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    const d = new Date(dateStr + 'T00:00:00');
+    const label = `${d.getDate()} ${MON_NAMES[d.getMonth()]} в ${time}`;
+
+    selectedDateTime = { date: dateStr, time, label };
+    updateDatetimeButton();
+    tg?.HapticFeedback?.selectionChanged();
+  }
+
+  function updateDatetimeButton() {
+    const ready  = !!selectedDateTime?.time;
+    const MB     = tg?.MainButton;
+    const fbMain = document.getElementById('js-fb-main');
+    if (MB) {
+      MB.setText(ready ? 'Продолжить' : 'Выберите время');
+      ready ? MB.enable() : MB.disable();
+    }
+    if (fbMain) {
+      fbMain.textContent = ready ? 'Продолжить' : 'Выберите время';
+      fbMain.disabled    = !ready;
+    }
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ОТКРЫТЬ ПОДТВЕРЖДЕНИЕ (Экран 5)
   ═══════════════════════════════════════════════════════════════════════ */
   function openConfirm() {
     if (!selectedSvc) return;
@@ -1596,6 +1846,8 @@
     document.getElementById('js-confirm-name').textContent     = selectedSvc.name;
     document.getElementById('js-confirm-price').textContent    = selectedSvc.price.toLocaleString('ru-RU') + ' ₽';
     document.getElementById('js-confirm-duration').textContent = selectedSvc.duration + ' минут';
+    document.getElementById('js-confirm-date').textContent     = selectedDateTime?.label?.split(' в ')[0] || '—';
+    document.getElementById('js-confirm-time').textContent     = selectedDateTime?.time || '—';
 
     /* Данные пользователя */
     const fullName = [userName, userLastName].filter(Boolean).join(' ') || 'Пользователь Telegram';
@@ -1628,6 +1880,9 @@
       service_name:     selectedSvc.name,
       service_price:    selectedSvc.price,
       service_duration: selectedSvc.duration,
+      booking_date:     selectedDateTime?.date || '',
+      booking_time:     selectedDateTime?.time || '',
+      booking_label:    selectedDateTime?.label || '',
       master_slug:      masterSlug || masterProfile?.slug || '',
       user_id:          userId,
       user_name:        [userName, userLastName].filter(Boolean).join(' '),
