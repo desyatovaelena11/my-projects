@@ -2,7 +2,7 @@ import json
 import logging
 import httpx
 from fastapi import APIRouter, Request
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from database import SessionLocal
 from models import Master
@@ -64,6 +64,17 @@ async def telegram_webhook(bot_token: str, request: Request):
 
 
 async def _handle_start(bot_token: str, master, chat_id: int):
+    # Если мастер ещё не зарегистрировал свой Telegram ID — сохраняем автоматически
+    if not master.telegram_id or master.telegram_id == 123456789:
+        async with SessionLocal() as db:
+            await db.execute(
+                update(Master)
+                .where(Master.id == master.id)
+                .values(telegram_id=chat_id)
+            )
+            await db.commit()
+        logger.info(f"Auto-saved telegram_id={chat_id} for master slug={master.slug}")
+
     tma_url = f"{TMA_BASE_URL}?startapp={master.slug}"
     result = await tg_send(bot_token, "sendMessage", {
         "chat_id": chat_id,
