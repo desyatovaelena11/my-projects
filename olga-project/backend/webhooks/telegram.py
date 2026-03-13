@@ -98,14 +98,18 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
     service_name = data.get("service_name", "—")
     price = data.get("service_price", "—")
     duration = data.get("service_duration", "—")
+    booking_label = data.get("booking_label", "")
+
+    datetime_line = f"📅 Дата и время: {booking_label}\n" if booking_label else ""
 
     master_text = (
         f"📩 *Новая заявка!*\n\n"
         f"👤 Клиент: {client_mention}\n"
         f"💅 Услуга: {service_name}\n"
+        f"{datetime_line}"
         f"💰 Стоимость: {price} ₽\n"
         f"⏱ Длительность: {duration} мин\n\n"
-        f"Напиши клиенту, чтобы согласовать дату и время."
+        f"Клиент ждёт подтверждения — напиши ему в Telegram."
     )
     r1 = await tg_send(bot_token, "sendMessage", {
         "chat_id": master.telegram_id,
@@ -114,12 +118,13 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
     })
     logger.info(f"Notify master result: {r1}")
 
+    client_datetime = f" на *{booking_label}*" if booking_label else ""
     r2 = await tg_send(bot_token, "sendMessage", {
         "chat_id": client_chat_id,
         "text": (
             f"✅ Заявка отправлена!\n\n"
-            f"*{master.name}* получила ваш запрос и напишет в Telegram "
-            f"в течение часа, чтобы назначить дату и время."
+            f"Вы записались{client_datetime}.\n"
+            f"*{master.name}* получила запрос и напишет в Telegram для подтверждения."
         ),
         "parse_mode": "Markdown",
     })
