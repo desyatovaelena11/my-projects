@@ -104,7 +104,7 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
 
     client_name = message.get("from", {}).get("first_name", "Клиент")
     client_username = message.get("from", {}).get("username", "")
-    client_mention = f"@{client_username}" if client_username else client_name
+    client_mention = f"@{client_username.replace('_', '\\_')}" if client_username else client_name
 
     service_name = data.get("service_name", "—")
     price = data.get("service_price", "—")

@@ -1271,7 +1271,7 @@
      TELEGRAM SDK
   ═══════════════════════════════════════════════════════════════════════ */
   const tg = window.Telegram?.WebApp;
-  const inTelegram = !!(tg && tg.initData);
+  const inTelegram = !!tg;
 
   if (tg) {
     tg.ready();   /* сообщаем Telegram, что приложение готово */
