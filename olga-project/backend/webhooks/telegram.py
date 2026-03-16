@@ -86,7 +86,7 @@ async def _handle_start(bot_token: str, master, chat_id: int):
         "parse_mode": "Markdown",
         "reply_markup": {
             "keyboard": [[
-                {"text": "💅 Открыть каталог", "web_app": {"url": tma_url}}
+                {"text": "💅 Открыть каталог услуг", "web_app": {"url": tma_url}}
             ]],
             "resize_keyboard": True,
             "one_time_keyboard": False,
