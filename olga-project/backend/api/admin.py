@@ -10,6 +10,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import select, text
@@ -302,6 +303,34 @@ async def update_booking_status(
         raise HTTPException(status_code=404, detail="Запись не найдена")
     booking.status = body.status
     await db.commit()
+
+    # Уведомляем клиента если есть его Telegram ID
+    if booking.client_telegram_id and master.bot_token:
+        date_str = f"{booking.booking_date} в {booking.booking_time}" if booking.booking_date else ""
+        if body.status == "confirmed":
+            text = (
+                f"✅ *{master.name}* подтвердила вашу запись!\n\n"
+                f"💅 Услуга: {booking.service_name}\n"
+                + (f"📅 Дата и время: {date_str}\n" if date_str else "") +
+                f"\nЖдём вас!"
+            )
+        else:
+            text = (
+                f"❌ Запись отменена.\n\n"
+                f"💅 Услуга: {booking.service_name}\n"
+                + (f"📅 Дата и время: {date_str}\n" if date_str else "") +
+                f"\nЕсли у вас есть вопросы — напишите мастеру напрямую."
+            )
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"https://api.telegram.org/bot{master.bot_token}/sendMessage",
+                    json={"chat_id": booking.client_telegram_id, "text": text, "parse_mode": "Markdown"},
+                    timeout=10,
+                )
+        except Exception:
+            pass  # Не ломаем ответ если Telegram недоступен
+
     return {"ok": True}
 
 
