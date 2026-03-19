@@ -16,7 +16,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from models import Master, Service
+from models import Master, Service, Booking
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -242,6 +242,65 @@ async def update_service(
     if body.sort_order is not None:
         service.sort_order = body.sort_order
 
+    await db.commit()
+    return {"ok": True}
+
+
+# ── Записи клиентов ───────────────────────────────────────────────────────────
+
+@router.get("/bookings")
+async def get_bookings(
+    _: None = Depends(verify_token),
+    db: AsyncSession = Depends(get_db),
+):
+    master = await _get_master(db)
+    result = await db.execute(
+        select(Booking)
+        .where(Booking.master_id == master.id)
+        .order_by(Booking.booking_date.desc(), Booking.booking_time.desc())
+    )
+    bookings = result.scalars().all()
+    return [
+        {
+            "id": str(b.id),
+            "client_name": b.client_name,
+            "client_username": b.client_username,
+            "service_name": b.service_name,
+            "service_price": b.service_price,
+            "service_duration_min": b.service_duration_min,
+            "booking_date": b.booking_date,
+            "booking_time": b.booking_time,
+            "status": b.status,
+            "created_at": b.created_at.isoformat() if b.created_at else None,
+        }
+        for b in bookings
+    ]
+
+
+class StatusUpdate(BaseModel):
+    status: str
+
+
+@router.put("/bookings/{booking_id}/status")
+async def update_booking_status(
+    booking_id: str,
+    body: StatusUpdate,
+    _: None = Depends(verify_token),
+    db: AsyncSession = Depends(get_db),
+):
+    if body.status not in ("pending", "confirmed", "cancelled"):
+        raise HTTPException(status_code=400, detail="Неверный статус")
+    master = await _get_master(db)
+    result = await db.execute(
+        select(Booking).where(
+            Booking.id == uuid.UUID(booking_id),
+            Booking.master_id == master.id,
+        )
+    )
+    booking = result.scalar_one_or_none()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+    booking.status = body.status
     await db.commit()
     return {"ok": True}
 

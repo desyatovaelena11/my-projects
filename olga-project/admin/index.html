@@ -168,6 +168,45 @@
 
     /* ── Работает часы: поле JSON ───────────────────────────────────── */
     .hint-text { font-size: 12px; color: var(--hint); margin-top: 4px; }
+
+    /* ── Карточки записей ───────────────────────────────────────────── */
+    .booking-card {
+      background: var(--bg2); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+    }
+    .booking-card.status-confirmed { border-color: var(--success); }
+    .booking-card.status-cancelled { opacity: 0.5; }
+
+    .booking-top {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    }
+    .booking-info { flex: 1; }
+    .booking-datetime {
+      font-weight: 700; font-size: 16px; margin-bottom: 4px;
+    }
+    .booking-client {
+      font-size: 14px; color: var(--hint); margin-bottom: 2px;
+    }
+    .booking-service { font-size: 14px; }
+
+    .booking-actions { display: flex; gap: 6px; flex-shrink: 0; flex-direction: column; align-items: flex-end; }
+
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .status-pending   { background: rgba(255,193,7,0.15); color: #ffc107; }
+    .status-confirmed { background: rgba(56,161,105,0.15); color: var(--success); }
+    .status-cancelled { background: rgba(229,62,62,0.15); color: var(--danger); }
+
+    .bookings-filter {
+      display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--bg2); color: var(--hint); font-size: 13px; cursor: pointer;
+    }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
@@ -198,6 +237,7 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="showTab('profile')">Профиль</button>
       <button class="tab-btn"        onclick="showTab('services')">Услуги</button>
+      <button class="tab-btn"        onclick="showTab('bookings')">Записи</button>
     </div>
 
     <!-- Таб: Профиль -->
@@ -243,6 +283,17 @@
         <div class="hint-text">mon/tue/wed/thu/fri/sat/sun — null означает выходной</div>
       </div>
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Сохранить профиль</button>
+    </div>
+
+    <!-- Таб: Записи -->
+    <div id="tab-bookings" class="tab-content">
+      <div class="bookings-filter">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Все</button>
+        <button class="filter-btn" onclick="setFilter('pending', this)">Ожидают</button>
+        <button class="filter-btn" onclick="setFilter('confirmed', this)">Подтверждены</button>
+        <button class="filter-btn" onclick="setFilter('cancelled', this)">Отменены</button>
+      </div>
+      <div id="bookings-list"><div class="empty">Загрузка…</div></div>
     </div>
 
     <!-- Таб: Услуги -->
@@ -350,10 +401,11 @@
 
   function showTab(name) {
     document.querySelectorAll('.tab-btn').forEach((b, i) => {
-      b.classList.toggle('active', ['profile','services'][i] === name);
+      b.classList.toggle('active', ['profile','services','bookings'][i] === name);
     });
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'bookings') loadBookings();
   }
 
   /* ── Вход / выход ───────────────────────────────────────────── */
@@ -598,6 +650,98 @@
       loadServices();
     } catch {
       showToast('Ошибка удаления', false);
+    }
+  }
+
+  /* ── Записи ─────────────────────────────────────────────────── */
+  let _bookings_cache = [];
+  let _bookings_filter = 'all';
+
+  const STATUS_LABELS = {
+    pending:   'Ожидает',
+    confirmed: 'Подтверждена',
+    cancelled: 'Отменена',
+  };
+  const DAY_NAMES = ['вс','пн','вт','ср','чт','пт','сб'];
+
+  function setFilter(f, btn) {
+    _bookings_filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBookings();
+  }
+
+  async function loadBookings() {
+    const el = document.getElementById('bookings-list');
+    try {
+      _bookings_cache = await api('GET', '/admin/bookings');
+      renderBookings();
+    } catch {
+      el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+    }
+  }
+
+  function renderBookings() {
+    const el = document.getElementById('bookings-list');
+    const list = _bookings_filter === 'all'
+      ? _bookings_cache
+      : _bookings_cache.filter(b => b.status === _bookings_filter);
+
+    if (!list.length) {
+      el.innerHTML = '<div class="empty">Записей нет</div>';
+      return;
+    }
+
+    el.innerHTML = list.map(b => {
+      const date = b.booking_date ? formatDate(b.booking_date) : '—';
+      const time = b.booking_time || '—';
+      const client = b.client_username
+        ? `@${b.client_username}`
+        : (b.client_name || 'Клиент');
+      const actions = b.status === 'pending' ? `
+        <button class="btn btn-sm" style="background:rgba(56,161,105,0.2);color:var(--success)"
+          onclick="setStatus('${b.id}', 'confirmed')">Подтвердить</button>
+        <button class="btn btn-sm" style="background:rgba(229,62,62,0.15);color:var(--danger)"
+          onclick="setStatus('${b.id}', 'cancelled')">Отменить</button>
+      ` : b.status === 'confirmed' ? `
+        <button class="btn btn-sm btn-secondary"
+          onclick="setStatus('${b.id}', 'cancelled')">Отменить</button>
+      ` : '';
+
+      return `
+        <div class="booking-card status-${b.status}">
+          <div class="booking-top">
+            <div class="booking-info">
+              <div class="booking-datetime">📅 ${date} в ${time}</div>
+              <div class="booking-client">👤 ${escHtml(client)}</div>
+              <div class="booking-service">💅 ${escHtml(b.service_name)} · ${b.service_price.toLocaleString('ru-RU')} ₽</div>
+            </div>
+            <div class="booking-actions">
+              <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
+              ${actions}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const day = DAY_NAMES[date.getDay()];
+    return `${d} ${['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'][m-1]} (${day})`;
+  }
+
+  async function setStatus(id, status) {
+    try {
+      await api('PUT', `/admin/bookings/${id}/status`, { status });
+      const b = _bookings_cache.find(x => x.id === id);
+      if (b) b.status = status;
+      renderBookings();
+      showToast(status === 'confirmed' ? 'Подтверждено ✓' : 'Отменено');
+    } catch {
+      showToast('Ошибка', false);
     }
   }
 
