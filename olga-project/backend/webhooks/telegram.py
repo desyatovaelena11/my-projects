@@ -1,11 +1,12 @@
 import json
 import logging
+import uuid
 import httpx
 from fastapi import APIRouter, Request
 from sqlalchemy import select, update
 
 from database import SessionLocal
-from models import Master
+from models import Master, Booking
 
 router = APIRouter()
 logger = logging.getLogger("webhook")
@@ -104,12 +105,38 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
 
     client_name = message.get("from", {}).get("first_name", "Клиент")
     client_username = message.get("from", {}).get("username", "")
+    client_full_name = " ".join(filter(None, [
+        message.get("from", {}).get("first_name", ""),
+        message.get("from", {}).get("last_name", ""),
+    ])) or "Клиент"
     client_mention = f"@{client_username.replace('_', '\\_')}" if client_username else client_name
 
     service_name = data.get("service_name", "—")
     price = data.get("service_price", "—")
     duration = data.get("service_duration", "—")
     booking_label = data.get("booking_label", "")
+    booking_date = data.get("booking_date", "")
+    booking_time = data.get("booking_time", "")
+
+    # Сохраняем запись в базу данных
+    if booking_date and booking_time:
+        async with SessionLocal() as db:
+            booking = Booking(
+                id=uuid.uuid4(),
+                master_id=master.id,
+                client_telegram_id=client_chat_id,
+                client_name=client_full_name,
+                client_username=client_username or None,
+                service_name=service_name,
+                service_price=int(price) if str(price).isdigit() else 0,
+                service_duration_min=int(duration) if str(duration).isdigit() else 60,
+                booking_date=booking_date,
+                booking_time=booking_time,
+                status="pending",
+            )
+            db.add(booking)
+            await db.commit()
+            logger.info(f"Booking saved: {booking_date} {booking_time} for master {master.slug}")
 
     datetime_line = f"📅 Дата и время: {booking_label}\n" if booking_label else ""
 

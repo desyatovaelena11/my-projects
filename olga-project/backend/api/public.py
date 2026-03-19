@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from database import get_db
-from models import Master, Service
+from models import Master, Service, Booking
 
 router = APIRouter(prefix="/api/v1")
 
@@ -67,6 +67,7 @@ async def get_profile(slug: str, db: AsyncSession = Depends(get_db)):
         "trust_text": master.trust_text,
         "working_hours": master.working_hours,
         "cancellation_hours": master.cancellation_hours,
+        "buffer_after_min": master.buffer_after_min,
         "slug": master.slug,
         "bot_username": master.bot_username,
     }
@@ -113,3 +114,31 @@ async def get_services(
         }
         for s in services
     ]
+
+
+@router.get("/{slug}/slots")
+async def get_slots(slug: str, date: str, db: AsyncSession = Depends(get_db)):
+    """
+    Возвращает занятые временные интервалы для выбранной даты.
+    TMA использует это чтобы показать клиенту только свободное время.
+
+    Параметр: ?date=YYYY-MM-DD
+    Ответ: {"booked": [{"start": "10:00", "duration_min": 90}, ...]}
+    """
+    master = await _get_active_master(slug, db)
+
+    result = await db.execute(
+        select(Booking).where(
+            Booking.master_id == master.id,
+            Booking.booking_date == date,
+            Booking.status != "cancelled",
+        )
+    )
+    bookings = result.scalars().all()
+
+    return {
+        "booked": [
+            {"start": b.booking_time, "duration_min": b.service_duration_min}
+            for b in bookings
+        ]
+    }

@@ -872,6 +872,12 @@
       color: #fff;
     }
     .time-btn:active { opacity: 0.75; }
+    .time-btn.booked {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+      text-decoration: line-through;
+    }
 
     .datetime-closed {
       grid-column: 1 / -1;
@@ -1764,7 +1770,22 @@
     renderTimeSlots(dateStr);
   }
 
-  function renderTimeSlots(dateStr) {
+  function _timeToMin(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function _isSlotBlocked(slotTime, slotDuration, takenIntervals, bufferMin) {
+    const slotStart = _timeToMin(slotTime);
+    const slotEnd   = slotStart + slotDuration;
+    return takenIntervals.some(b => {
+      const bStart = _timeToMin(b.start);
+      const bEnd   = bStart + b.duration_min + bufferMin;
+      return slotStart < bEnd && slotEnd > bStart;
+    });
+  }
+
+  async function renderTimeSlots(dateStr) {
     const grid    = document.getElementById('js-time-grid');
     const DAY_KEYS = ['sun','mon','tue','wed','thu','fri','sat'];
     const wh = masterProfile?.working_hours || {
@@ -1784,12 +1805,12 @@
     const [startStr, endStr] = hours.split('-');
     const [startH, startM]   = startStr.split(':').map(Number);
     const [endH,   endM]     = endStr.split(':').map(Number);
-    const duration = selectedSvc?.duration || 60;
+    const duration  = selectedSvc?.duration || 60;
+    const bufferMin = masterProfile?.buffer_after_min ?? 15;
 
     const slots = [];
     let cur = startH * 60 + startM;
     const end = endH * 60 + endM;
-
     while (cur + duration <= end) {
       const h = Math.floor(cur / 60).toString().padStart(2,'0');
       const m = (cur % 60).toString().padStart(2,'0');
@@ -1802,9 +1823,30 @@
       return;
     }
 
+    // Показываем слоты сразу, пока грузим занятые
     grid.innerHTML = slots.map(t =>
       `<button class="time-btn" data-time="${t}" onclick="selectTime('${dateStr}','${t}')">${t}</button>`
     ).join('');
+
+    // Запрашиваем занятые слоты с сервера
+    if (masterSlug && API_BASE) {
+      try {
+        const r = await fetch(`${API_BASE}/api/v1/${masterSlug}/slots?date=${dateStr}`);
+        if (r.ok) {
+          const { booked } = await r.json();
+          if (booked?.length) {
+            grid.querySelectorAll('.time-btn').forEach(btn => {
+              if (_isSlotBlocked(btn.dataset.time, duration, booked, bufferMin)) {
+                btn.classList.add('booked');
+                btn.onclick = null;
+              }
+            });
+          }
+        }
+      } catch (e) {
+        // Ошибка сети — оставляем все слоты доступными
+      }
+    }
   }
 
   function selectTime(dateStr, time) {
