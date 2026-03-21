@@ -930,7 +930,7 @@
         <div class="offer-bullet">• Первыми узнаёте о свободных окошках</div>
         <div class="offer-bullet">• Эксклюзивные акции для подписчиков</div>
       </div>
-      <a class="offer-btn" href="https://t.me/Ma_master_bot?start=from_app" target="_blank" onclick="closeOffer()">Получить скидку 15%</a>
+      <a class="offer-btn" id="js-offer-btn" href="https://t.me/Ma_master_bot?start=from_app" target="_blank" onclick="closeOffer()">Получить скидку 15%</a>
       <span class="offer-skip" onclick="closeOffer()">Пропустить</span>
     </div>
   </div>
@@ -1347,6 +1347,11 @@
 
       const trustEl = document.getElementById('js-trust-text');
       if (trustEl && profile.trust_text) trustEl.textContent = profile.trust_text;
+
+      const offerBtn = document.getElementById('js-offer-btn');
+      if (offerBtn && profile.bot_username) {
+        offerBtn.href = `https://t.me/${profile.bot_username}?start=from_app`;
+      }
 
       const phoneEl = document.getElementById('js-phone-link');
       if (phoneEl && profile.phone) phoneEl.href = 'tel:' + profile.phone;

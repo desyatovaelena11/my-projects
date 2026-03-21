@@ -338,3 +338,133 @@ SELECT column_name FROM information_schema.columns WHERE table_name = 'bookings'
 | 13 | TMA данные | Меню-кнопка открывает TMA без startapp — приложение не знает мастера | setChatMenuButton + tg-app |
 | 14 | База данных | `create_all` не мигрирует существующие таблицы — нужен ALTER TABLE | Supabase / миграции |
 | 15 | Деплой | Новые файлы модели не задеплоены на сервер — функция молча не работает | Ручной деплой |
+| 16 | База данных | Нет уникального ограничения на слот — двойное бронирование возможно | bookings таблица |
+| 17 | API безопасность | Webhook принимал заявки на прошедшие даты без проверки | webhooks/telegram.py |
+| 18 | База данных | Схема БД и Python-модель разошлись: дублирующие колонки client_tg_id/starts_at | models/booking.py |
+| 19 | TMA UI | Счётчики услуг в категориях захардкожены — не обновляются при изменении каталога | tg-app/index.html |
+| 20 | TMA UI | Политика отмены и рабочие часы захардкожены — не берутся из профиля мастера | tg-app/index.html |
+
+---
+
+## 16. Нет защиты от двойного бронирования
+
+**Что случилось:**
+Два клиента могли одновременно видеть один слот свободным и оба записаться на него. Ольга получала двух клиентов в одно время.
+
+**Причина:**
+Не было ни уникального ограничения в БД, ни проверки на сервере перед сохранением записи.
+
+**Решение:**
+```sql
+-- Уникальный частичный индекс: отменённые записи не блокируют слот
+CREATE UNIQUE INDEX uq_master_active_slot
+ON bookings (master_id, booking_date, booking_time)
+WHERE status != 'cancelled'
+  AND booking_date IS NOT NULL
+  AND booking_time IS NOT NULL;
+```
+И в webhook перед сохранением:
+```python
+conflict = await db.execute(
+    select(Booking).where(
+        Booking.master_id == master.id,
+        Booking.booking_date == booking_date,
+        Booking.booking_time == booking_time,
+        Booking.status != "cancelled",
+    )
+)
+if conflict.scalar_one_or_none():
+    # сообщить клиенту что время занято
+    return
+```
+
+**Правило:**
+Любой ресурс с ограниченной доступностью (время, место, товар) требует:
+1. Уникального ограничения на уровне БД (последний рубеж)
+2. Проверки на уровне приложения перед записью (быстрый ответ клиенту)
+
+---
+
+## 17. Webhook принимал заявки без валидации
+
+**Что случилось:**
+Клиент мог отправить запись на прошедшую дату. Webhook сохранял её без вопросов — Ольга видела фантомные записи из прошлого.
+
+**Причина:**
+Обработчик `_handle_booking` сохранял данные как есть, без проверок.
+
+**Решение:**
+```python
+from datetime import date as date_cls
+
+if date_cls.fromisoformat(booking_date) < date_cls.today():
+    await tg_send(bot_token, "sendMessage", {
+        "chat_id": client_chat_id,
+        "text": "❌ Нельзя записаться на прошедшую дату.",
+    })
+    return
+```
+
+**Правило:**
+Данные от клиента всегда проверять на сервере: дата не в прошлом, время в рабочих часах, слот свободен. Клиентский код не гарантия — данные можно подменить.
+
+---
+
+## 18. Python-модель и схема БД разошлись
+
+**Что случилось:**
+В таблице `bookings` были колонки `client_tg_id` и `client_telegram_id` (дубли), `starts_at` и `booking_date`+`booking_time` (два подхода к дате). Python-модель знала только о новых полях, а старые висели в БД как мусор.
+
+**Причина:**
+Схема менялась итеративно через Supabase UI без удаления старых колонок. Python-модель создавалась с нуля под новый подход.
+
+**Решение:**
+```sql
+ALTER TABLE bookings DROP COLUMN IF EXISTS client_tg_id;
+ALTER TABLE bookings DROP COLUMN IF EXISTS starts_at;
+ALTER TABLE bookings DROP COLUMN IF EXISTS service_id;
+```
+
+**Правило:**
+При изменении схемы всегда писать SQL-миграцию и сразу удалять устаревшие колонки. Периодически сверять `information_schema.columns` с Python-моделями.
+
+---
+
+## 19. Статичные счётчики услуг в TMA
+
+**Что случилось:**
+На главном экране TMA написано "3 услуги", "2 услуги" — хардкодом. После того как Ольга добавила новые услуги через панель, счётчики не обновились. Клиент видел неверные цифры.
+
+**Решение:**
+```js
+// После загрузки услуг из API — пересчитать счётчики:
+function updateCategoryCounts() {
+  document.querySelectorAll('.category-item[data-cat]').forEach(item => {
+    const count = SERVICES.filter(s => s.category === item.dataset.cat).length;
+    item.querySelector('.category-count').textContent =
+      count + ' ' + pluralServices(count);
+  });
+}
+```
+
+**Правило:**
+Любые числа и тексты, которые зависят от данных в БД — генерировать динамически после загрузки данных из API.
+
+---
+
+## 20. Захардкоженные тексты не отражают настройки профиля
+
+**Что случилось:**
+В TMA текст "Отмена за 2 часа" и "Работает пн–сб с 9:00 до 21:00" был прописан в HTML. После изменения `cancellation_hours` или `working_hours` в панели мастера — клиенты видели старую информацию.
+
+**Решение:**
+```js
+// После загрузки профиля — обновить тексты:
+const cancelHours = profile.cancellation_hours ?? 2;
+document.querySelector('.service-policy').textContent =
+  `Без предоплаты · Отмена за ${cancelHours} ${pluralHours(cancelHours)} — без вопросов`;
+```
+
+**Правило:**
+Всё что мастер может изменить в панели — должно автоматически отображаться в TMA. Никаких захардкоженных бизнес-правил в HTML.
+
