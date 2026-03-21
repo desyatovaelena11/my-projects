@@ -1388,6 +1388,29 @@
         }));
         /* Перерисовываем каталог с данными из API */
         renderCatalog(activeFilter);
+        /* Обновляем счётчики услуг в категориях */
+        updateCategoryCounts();
+      }
+
+      /* ── Обновляем тексты из профиля ────────────────────────────────── */
+      const cancelHours = profile.cancellation_hours ?? 2;
+      const policyEl = document.querySelector('.service-policy');
+      if (policyEl) {
+        policyEl.textContent = `Без предоплаты · Отмена за ${cancelHours} ${pluralHours(cancelHours)} — без вопросов`;
+      }
+
+      const successHoursEl = document.querySelector('.success-hours');
+      if (successHoursEl && profile.working_hours) {
+        const wh = profile.working_hours;
+        const days = { mon:'пн', tue:'вт', wed:'ср', thu:'чт', fri:'пт', sat:'сб', sun:'вс' };
+        const openDays = Object.entries(wh)
+          .filter(([, v]) => v)
+          .map(([k]) => days[k]);
+        const firstTime = Object.values(wh).find(v => v)?.split('-')[0] || '9:00';
+        const lastTime  = Object.values(wh).filter(v => v).slice(-1)[0]?.split('-')[1] || '21:00';
+        if (openDays.length) {
+          successHoursEl.textContent = `🕘 Работает ${openDays[0]}–${openDays[openDays.length-1]} с ${firstTime} до ${lastTime}`;
+        }
       }
     } catch (err) {
       console.warn('API недоступен, используем дефолтные данные:', err.message);
@@ -1396,6 +1419,27 @@
 
   /* Запускаем загрузку данных — не ждём (async), UI не блокируется */
   loadMasterData();
+
+  function pluralHours(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'час';
+    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'часа';
+    return 'часов';
+  }
+
+  function updateCategoryCounts() {
+    document.querySelectorAll('.category-item[data-cat]').forEach(item => {
+      const cat   = item.dataset.cat;
+      const count = SERVICES.filter(s => s.category === cat).length;
+      const el    = item.querySelector('.category-count');
+      if (el) el.textContent = count + ' ' + pluralServices(count);
+    });
+  }
+
+  function pluralServices(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'услуга';
+    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'услуги';
+    return 'услуг';
+  }
 
 
   /* Показываем fallback-кнопки если открыто в браузере */

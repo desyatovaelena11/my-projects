@@ -1,6 +1,7 @@
 import json
 import logging
 import uuid
+from datetime import date as date_cls
 import httpx
 from fastapi import APIRouter, Request
 from sqlalchemy import select, update
@@ -118,9 +119,49 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
     booking_date = data.get("booking_date", "")
     booking_time = data.get("booking_time", "")
 
-    # Сохраняем запись в базу данных
+    # Валидация и сохранение записи
     if booking_date and booking_time:
+        # Проверка 1: дата не в прошлом
+        try:
+            booking_date_obj = date_cls.fromisoformat(booking_date)
+        except ValueError:
+            logger.error(f"Invalid booking_date format: {booking_date}")
+            await tg_send(bot_token, "sendMessage", {
+                "chat_id": client_chat_id,
+                "text": "❌ Неверный формат даты. Пожалуйста, попробуйте снова.",
+            })
+            return
+
+        if booking_date_obj < date_cls.today():
+            logger.warning(f"Attempt to book past date: {booking_date}")
+            await tg_send(bot_token, "sendMessage", {
+                "chat_id": client_chat_id,
+                "text": "❌ Нельзя записаться на прошедшую дату. Пожалуйста, выберите другое время.",
+            })
+            return
+
+        # Проверка 2: слот не занят (защита от двойного бронирования)
         async with SessionLocal() as db:
+            conflict = await db.execute(
+                select(Booking).where(
+                    Booking.master_id == master.id,
+                    Booking.booking_date == booking_date,
+                    Booking.booking_time == booking_time,
+                    Booking.status != "cancelled",
+                )
+            )
+            if conflict.scalar_one_or_none():
+                logger.warning(f"Slot conflict: {booking_date} {booking_time} already booked for master {master.slug}")
+                await tg_send(bot_token, "sendMessage", {
+                    "chat_id": client_chat_id,
+                    "text": (
+                        "❌ К сожалению, это время только что заняли.\n\n"
+                        "Пожалуйста, вернитесь и выберите другое время."
+                    ),
+                })
+                return
+
+            # Всё ок — сохраняем
             booking = Booking(
                 id=uuid.uuid4(),
                 master_id=master.id,
@@ -128,8 +169,8 @@ async def _handle_booking(bot_token: str, master, client_chat_id: int, message: 
                 client_name=client_full_name,
                 client_username=client_username or None,
                 service_name=service_name,
-                service_price=int(price) if str(price).isdigit() else 0,
-                service_duration_min=int(duration) if str(duration).isdigit() else 60,
+                service_price=int(price) if isinstance(price, int) or str(price).isdigit() else 0,
+                service_duration_min=int(duration) if isinstance(duration, int) or str(duration).isdigit() else 60,
                 booking_date=booking_date,
                 booking_time=booking_time,
                 status="pending",
