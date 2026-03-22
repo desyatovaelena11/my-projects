@@ -11,8 +11,12 @@
   2. Подписка мастера не истекла
 """
 
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timezone, date as date_cls
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -142,3 +146,104 @@ async def get_slots(slug: str, date: str, db: AsyncSession = Depends(get_db)):
             for b in bookings
         ]
     }
+
+
+# ── Создание записи (вызывается напрямую из TMA) ──────────────────────────────
+
+class BookingCreate(BaseModel):
+    service_name: str = Field(..., min_length=1)
+    service_price: int = Field(..., ge=0)
+    service_duration_min: int = Field(..., gt=0)
+    booking_date: str          # YYYY-MM-DD
+    booking_time: str          # HH:MM
+    booking_label: str = ""
+    client_telegram_id: int | None = None
+    client_name: str | None = None
+    client_username: str | None = None
+
+
+async def _tg_send(token: str, chat_id: int, text: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                json={"chat_id": chat_id, "text": text, "parse_mode": "Markdown"},
+                timeout=10,
+            )
+    except Exception:
+        pass
+
+
+@router.post("/{slug}/bookings")
+async def create_booking(slug: str, body: BookingCreate, db: AsyncSession = Depends(get_db)):
+    master = await _get_active_master(slug, db)
+
+    # Проверка: дата не в прошлом
+    try:
+        booking_date_obj = date_cls.fromisoformat(body.booking_date)
+        if booking_date_obj < date_cls.today():
+            raise HTTPException(status_code=400, detail="Нельзя записаться на прошедшую дату")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Неверный формат даты")
+
+    # Проверка: слот не занят
+    conflict = await db.execute(
+        select(Booking).where(
+            Booking.master_id == master.id,
+            Booking.booking_date == body.booking_date,
+            Booking.booking_time == body.booking_time,
+            Booking.status != "cancelled",
+        )
+    )
+    if conflict.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Это время уже занято. Выберите другое.")
+
+    # Сохраняем запись
+    booking = Booking(
+        id=uuid.uuid4(),
+        master_id=master.id,
+        client_telegram_id=body.client_telegram_id,
+        client_name=body.client_name,
+        client_username=body.client_username,
+        service_name=body.service_name,
+        service_price=body.service_price,
+        service_duration_min=body.service_duration_min,
+        booking_date=body.booking_date,
+        booking_time=body.booking_time,
+        status="pending",
+    )
+    db.add(booking)
+    await db.commit()
+
+    # Уведомляем мастера и клиента через Telegram
+    if master.bot_token:
+        client_mention = (
+            f"@{body.client_username.replace('_', chr(92) + '_')}"
+            if body.client_username
+            else (body.client_name or "Клиент")
+        )
+        date_str = body.booking_label or f"{body.booking_date} в {body.booking_time}"
+
+        if master.telegram_id:
+            await _tg_send(
+                master.bot_token,
+                master.telegram_id,
+                f"📩 *Новая заявка!*\n\n"
+                f"👤 Клиент: {client_mention}\n"
+                f"💅 Услуга: {body.service_name}\n"
+                f"📅 Дата и время: {date_str}\n"
+                f"💰 Стоимость: {body.service_price} ₽\n"
+                f"⏱ Длительность: {body.service_duration_min} мин\n\n"
+                f"Клиент ждёт подтверждения — напиши ему в Telegram.",
+            )
+
+        if body.client_telegram_id:
+            await _tg_send(
+                master.bot_token,
+                body.client_telegram_id,
+                f"✅ Заявка отправлена!\n\n"
+                f"Вы записались на *{date_str}*.\n"
+                f"*{master.name}* получила запрос и напишет в Telegram для подтверждения.",
+            )
+
+    return {"ok": True, "booking_id": str(booking.id)}

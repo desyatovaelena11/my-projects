@@ -1960,40 +1960,47 @@
 
   /* ═══════════════════════════════════════════════════════════════════════
      ОТПРАВИТЬ ЗАЯВКУ (Экран 4 → 5)
-     tg.sendData() передаёт JSON боту через webhook.
-     Бот получает строку в поле message.web_app_data.data
+     Запись отправляется напрямую на сервер через POST /api/v1/{slug}/bookings.
+     Работает через любую кнопку: меню-кнопку, reply keyboard или браузер.
   ═══════════════════════════════════════════════════════════════════════ */
-  function sendBooking() {
+  async function sendBooking() {
     if (!selectedSvc) return;
 
-    const payload = JSON.stringify({
-      service_id:       selectedSvc.id,
-      service_name:     selectedSvc.name,
-      service_price:    selectedSvc.price,
-      service_duration: selectedSvc.duration,
-      booking_date:     selectedDateTime?.date || '',
-      booking_time:     selectedDateTime?.time || '',
-      booking_label:    selectedDateTime?.label || '',
-      master_slug:      masterSlug || masterProfile?.slug || '',
-      user_id:          userId,
-      user_name:        [userName, userLastName].filter(Boolean).join(' '),
-      user_username:    userLogin
-    });
+    if (tg) tg.MainButton?.showProgress(true);
 
-    /* Сначала показываем экран успеха, потом sendData() закрывает TMA.
-       Порядок важен: sendData() закрывает приложение немедленно,
-       поэтому goTo('success') должен идти до него. */
-    goTo('success');
+    const body = {
+      service_name:         selectedSvc.name,
+      service_price:        selectedSvc.price,
+      service_duration_min: selectedSvc.duration,
+      booking_date:         selectedDateTime?.date || '',
+      booking_time:         selectedDateTime?.time || '',
+      booking_label:        selectedDateTime?.label || '',
+      client_telegram_id:   userId || null,
+      client_name:          [userName, userLastName].filter(Boolean).join(' ') || null,
+      client_username:      userLogin || null,
+    };
 
-    if (tg) {
-      tg.MainButton?.showProgress(false);
-      try {
-        tg.sendData(payload);
-      } catch (err) {
-        console.warn('sendData недоступен вне контекста бота:', err);
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/${masterSlug}/bookings`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || 'Ошибка сервера');
       }
-    } else {
-      console.log('Заявка (браузер):', payload);
+
+      if (tg) {
+        tg.MainButton?.showProgress(false);
+        tg.MainButton?.hide();
+      }
+      goTo('success');
+
+    } catch (err) {
+      if (tg) tg.MainButton?.showProgress(false);
+      alert('Не удалось отправить заявку:\n' + err.message);
     }
   }
 </script>
