@@ -789,7 +789,9 @@
       /* Плитки карточек внутри */
       const cards = items.map(b => {
         const time = b.booking_time || '—';
-        const client = b.client_username ? `@${b.client_username}` : (b.client_name || 'Клиент');
+        const client = b.client_username
+          ? `@${b.client_username}`
+          : (b.client_name || (b.client_telegram_id ? `tg:${b.client_telegram_id}` : 'Без аккаунта'));
         const actions = b.status === 'pending' ? `
           <button class="btn btn-sm" style="background:rgba(56,161,105,0.2);color:var(--success)"
             onclick="setStatus('${b.id}','confirmed')">Подтвердить</button>
