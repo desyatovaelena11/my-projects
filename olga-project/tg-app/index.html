@@ -799,15 +799,36 @@
     .ob-btn:active { opacity: 0.8; }
 
     /* ── Экран выбора даты и времени ──────────────────────────────────── */
-    .date-strip {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 16px;
-      scrollbar-width: none;
-    }
-    .date-strip::-webkit-scrollbar { display: none; }
+    .date-strip { padding: 0 16px 8px; }
 
+    /* Календарь */
+    .cal-month { margin-bottom: 28px; }
+    .cal-month-title {
+      font-weight: 700; font-size: 16px; text-align: center;
+      padding: 12px 0 10px; color: var(--tg-theme-text-color);
+    }
+    .cal-weekdays {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      text-align: center; margin-bottom: 4px;
+    }
+    .cal-weekday {
+      font-size: 12px; font-weight: 600; padding: 4px 0;
+      color: var(--tg-theme-hint-color);
+    }
+    .cal-weekday.weekend { color: var(--accent); }
+    .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; font-size: 15px; font-weight: 500; cursor: pointer;
+      transition: background 120ms;
+    }
+    .cal-day.empty { pointer-events: none; }
+    .cal-day.disabled { color: var(--tg-theme-hint-color); opacity: 0.35; cursor: default; pointer-events: none; }
+    .cal-day.active { background: var(--accent); color: #fff; font-weight: 700; }
+    .cal-day.today:not(.active) { border: 2px solid var(--accent); }
+    .cal-day:not(.disabled):not(.empty):not(.active):active { background: rgba(255,107,53,0.2); }
+
+    /* (старые классы chip оставлены для совместимости, но не используются) */
     .date-chip {
       flex-shrink: 0;
       display: flex;
@@ -1061,11 +1082,11 @@
       <div class="screen-title">Дата и время</div>
     </div>
 
-    <!-- Горизонтальная полоса дат (14 дней вперёд) -->
+    <!-- Календарь (60 дней вперёд) -->
     <div class="date-strip" id="js-date-strip"></div>
 
     <!-- Сетка слотов времени -->
-    <div class="time-section-label">Доступное время</div>
+    <div class="time-section-label" id="js-time-label" style="display:none">Доступное время</div>
     <div class="time-grid" id="js-time-grid"></div>
 
   </div><!-- /screen-datetime -->
@@ -1775,11 +1796,16 @@
     goTo('datetime');
   }
 
+  function _toDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
   function renderDateStrip() {
-    const strip     = document.getElementById('js-date-strip');
+    const container = document.getElementById('js-date-strip');
     const DAY_KEYS  = ['sun','mon','tue','wed','thu','fri','sat'];
-    const DAY_NAMES = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-    const MON_NAMES = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const WEEKDAY_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                         'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     const wh = masterProfile?.working_hours || {
       mon:'9:00-21:00', tue:'9:00-21:00', wed:'9:00-21:00',
       thu:'9:00-21:00', fri:'9:00-21:00', sat:'10:00-18:00', sun: null
@@ -1787,36 +1813,78 @@
 
     const today = new Date();
     today.setHours(0,0,0,0);
-    let firstDate = null;
-    const chips = [];
+    const todayStr = _toDateStr(today);
 
+    /* Собираем доступные даты на 60 дней вперёд */
+    const available = new Set();
+    let firstDate = null;
     for (let i = 1; i <= 60; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
-      const key      = DAY_KEYS[d.getDay()];
-      const closed   = !wh[key];
-      const dateStr  = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      if (!closed && !firstDate) firstDate = dateStr;
-
-      chips.push(`
-        <div class="date-chip ${closed ? 'disabled' : ''}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">
-          <div class="date-chip-day">${DAY_NAMES[d.getDay()]}</div>
-          <div class="date-chip-num">${d.getDate()}</div>
-          <div class="date-chip-mon">${MON_NAMES[d.getMonth()]}</div>
-        </div>`);
+      const key = DAY_KEYS[d.getDay()];
+      if (wh[key]) {
+        const ds = _toDateStr(d);
+        available.add(ds);
+        if (!firstDate) firstDate = ds;
+      }
     }
 
-    strip.innerHTML = chips.join('');
+    /* Определяем месяцы для отображения */
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 60);
+    const months = [];
+    let cur = new Date(today.getFullYear(), today.getMonth(), 1);
+    while (cur <= endDate) { months.push(new Date(cur)); cur.setMonth(cur.getMonth() + 1); }
+
+    let html = '';
+    months.forEach(monthStart => {
+      const yr = monthStart.getFullYear();
+      const mo = monthStart.getMonth();
+      const daysInMonth = new Date(yr, mo + 1, 0).getDate();
+      /* Первый день недели (пн=0 … вс=6) */
+      const firstDow = (new Date(yr, mo, 1).getDay() + 6) % 7;
+
+      html += `<div class="cal-month">`;
+      html += `<div class="cal-month-title">${MONTH_NAMES[mo]} ${yr}</div>`;
+      html += `<div class="cal-weekdays">`;
+      WEEKDAY_LABELS.forEach((lbl, i) =>
+        html += `<div class="cal-weekday${i >= 5 ? ' weekend' : ''}">${lbl}</div>`
+      );
+      html += `</div><div class="cal-days">`;
+
+      for (let i = 0; i < firstDow; i++) html += `<div class="cal-day empty"></div>`;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(yr, mo, day);
+        const ds = _toDateStr(d);
+        const isPast = d <= today;
+        const isAvail = available.has(ds);
+        const isToday = ds === todayStr;
+        const disabled = isPast || !isAvail;
+        const cls = ['cal-day', disabled ? 'disabled' : '', isToday ? 'today' : ''].filter(Boolean).join(' ');
+        const click = disabled ? '' : `onclick="selectDate('${ds}')"`;
+        html += `<div class="${cls}" data-date="${ds}" ${click}>${day}</div>`;
+      }
+      html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
     if (firstDate) selectDate(firstDate);
   }
 
   function selectDate(dateStr) {
-    document.querySelectorAll('.date-chip').forEach(c => {
+    document.querySelectorAll('.cal-day').forEach(c => {
       c.classList.toggle('active', c.dataset.date === dateStr);
     });
+    document.getElementById('js-time-label').style.display = '';
     if (selectedDateTime) selectedDateTime = null;
     updateDatetimeButton();
     renderTimeSlots(dateStr);
+    /* Плавно прокручиваем к слотам времени */
+    setTimeout(() => {
+      document.getElementById('js-time-label')
+        .scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
   }
 
   function _timeToMin(t) {
