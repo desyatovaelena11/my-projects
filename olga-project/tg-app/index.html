@@ -1864,17 +1864,19 @@
         const isToday = ds === todayStr;
         const disabled = isPast || !isAvail;
         const cls = ['cal-day', disabled ? 'disabled' : '', isToday ? 'today' : ''].filter(Boolean).join(' ');
-        const click = disabled ? '' : `onclick="selectDate('${ds}')"`;
+        const click = disabled ? '' : `onclick="selectDate('${ds}', true)"`;
         html += `<div class="${cls}" data-date="${ds}" ${click}>${day}</div>`;
       }
       html += `</div></div>`;
     });
 
     container.innerHTML = html;
-    if (firstDate) selectDate(firstDate);
+    /* Подсвечиваем первую доступную дату, но НЕ прокручиваем —
+       пользователь сам должен увидеть календарь */
+    if (firstDate) selectDate(firstDate, false);
   }
 
-  function selectDate(dateStr) {
+  function selectDate(dateStr, scroll = true) {
     document.querySelectorAll('.cal-day').forEach(c => {
       c.classList.toggle('active', c.dataset.date === dateStr);
     });
@@ -1882,11 +1884,13 @@
     if (selectedDateTime) selectedDateTime = null;
     updateDatetimeButton();
     renderTimeSlots(dateStr);
-    /* Плавно прокручиваем к слотам времени */
-    setTimeout(() => {
-      document.getElementById('js-time-label')
-        .scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 120);
+    /* Прокручиваем к слотам только когда пользователь сам нажал дату */
+    if (scroll) {
+      setTimeout(() => {
+        document.getElementById('js-time-label')
+          .scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    }
   }
 
   function _timeToMin(t) {
