@@ -169,11 +169,52 @@
     /* ── Работает часы: поле JSON ───────────────────────────────────── */
     .hint-text { font-size: 12px; color: var(--hint); margin-top: 4px; }
 
+    /* ── Плашки дат (аккордеон) ─────────────────────────────────────── */
+    .date-group { margin-bottom: 10px; border-radius: var(--radius); overflow: hidden; }
+
+    .date-tile {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: var(--bg2); cursor: pointer;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      transition: background 150ms;
+      user-select: none;
+    }
+    .date-tile:active { background: #2a2a2a; }
+    .date-tile.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+
+    .date-tile-left { display: flex; align-items: center; gap: 12px; }
+    .date-tile-day {
+      background: var(--accent); color: #000; font-weight: 800;
+      font-size: 13px; border-radius: 8px; padding: 4px 10px; min-width: 36px; text-align: center;
+    }
+    .date-tile-day.today { background: var(--success); }
+    .date-tile-day.past  { background: #444; color: #999; }
+    .date-tile-label { font-weight: 600; font-size: 15px; }
+    .date-tile-sub   { font-size: 13px; color: var(--hint); margin-top: 1px; }
+
+    .date-tile-right { display: flex; align-items: center; gap: 10px; }
+    .date-count {
+      font-size: 13px; font-weight: 600; color: var(--hint);
+    }
+    .date-arrow {
+      font-size: 16px; color: var(--hint);
+      transition: transform 250ms; display: inline-block;
+    }
+    .date-tile.open .date-arrow { transform: rotate(180deg); }
+
+    .date-body {
+      display: none; border: 1px solid var(--border);
+      border-top: none; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);
+      padding: 10px;
+    }
+    .date-body.open { display: block; }
+
     /* ── Карточки записей ───────────────────────────────────────────── */
     .booking-card {
-      background: var(--bg2); border-radius: var(--radius);
-      padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+      background: var(--bg); border-radius: calc(var(--radius) - 4px);
+      padding: 12px; margin-bottom: 8px; border: 1px solid var(--border);
     }
+    .booking-card:last-child { margin-bottom: 0; }
     .booking-card.status-confirmed { border-color: var(--success); }
     .booking-card.status-cancelled { opacity: 0.5; }
 
@@ -182,12 +223,12 @@
     }
     .booking-info { flex: 1; }
     .booking-datetime {
-      font-weight: 700; font-size: 16px; margin-bottom: 4px;
+      font-weight: 700; font-size: 15px; margin-bottom: 4px;
     }
     .booking-client {
-      font-size: 14px; color: var(--hint); margin-bottom: 2px;
+      font-size: 13px; color: var(--hint); margin-bottom: 2px;
     }
-    .booking-service { font-size: 14px; }
+    .booking-service { font-size: 13px; }
 
     .booking-actions { display: flex; gap: 6px; flex-shrink: 0; flex-direction: column; align-items: flex-end; }
 
@@ -681,6 +722,18 @@
     }
   }
 
+  /* Открытые плашки дат (хранит dateStr вида YYYY-MM-DD) */
+  const _openDates = new Set();
+
+  function toggleDateGroup(dateStr) {
+    if (_openDates.has(dateStr)) {
+      _openDates.delete(dateStr);
+    } else {
+      _openDates.add(dateStr);
+    }
+    renderBookings();
+  }
+
   function renderBookings() {
     const el = document.getElementById('bookings-list');
     const list = _bookings_filter === 'all'
@@ -692,37 +745,93 @@
       return;
     }
 
-    el.innerHTML = list.map(b => {
-      const date = b.booking_date ? formatDate(b.booking_date) : '—';
-      const time = b.booking_time || '—';
-      const client = b.client_username
-        ? `@${b.client_username}`
-        : (b.client_name || 'Клиент');
-      const actions = b.status === 'pending' ? `
-        <button class="btn btn-sm" style="background:rgba(56,161,105,0.2);color:var(--success)"
-          onclick="setStatus('${b.id}', 'confirmed')">Подтвердить</button>
-        <button class="btn btn-sm" style="background:rgba(229,62,62,0.15);color:var(--danger)"
-          onclick="setStatus('${b.id}', 'cancelled')">Отменить</button>
-      ` : b.status === 'confirmed' ? `
-        <button class="btn btn-sm btn-secondary"
-          onclick="setStatus('${b.id}', 'cancelled')">Отменить</button>
-      ` : '';
+    /* Группируем по датам */
+    const groups = {};
+    list.forEach(b => {
+      const key = b.booking_date || '—';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(b);
+    });
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    /* Автооткрываем ближайшую будущую (или сегодняшнюю) дату при первой загрузке */
+    if (_openDates.size === 0) {
+      const upcoming = Object.keys(groups).find(d => d >= today) || Object.keys(groups)[0];
+      if (upcoming) _openDates.add(upcoming);
+    }
+
+    el.innerHTML = Object.keys(groups).map(dateStr => {
+      const items = groups[dateStr];
+      const isOpen = _openDates.has(dateStr);
+      const isToday = dateStr === today;
+      const isPast  = dateStr < today;
+
+      /* Метка дня (число месяца) */
+      let dayLabel = '—', fullLabel = '—', subLabel = '';
+      if (dateStr !== '—') {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+        dayLabel  = d;
+        fullLabel = isToday ? 'Сегодня' : `${d} ${months[m-1]}`;
+        subLabel  = DAY_NAMES[dt.getDay()] + (isToday ? `, ${d} ${months[m-1]}` : '');
+      }
+
+      /* Сводка по статусам */
+      const pending   = items.filter(b => b.status === 'pending').length;
+      const confirmed = items.filter(b => b.status === 'confirmed').length;
+      const parts = [];
+      if (pending)   parts.push(`${pending} ожидает`);
+      if (confirmed) parts.push(`${confirmed} подтв.`);
+      const countLabel = parts.length ? parts.join(' · ') : `${items.length} зап.`;
+
+      /* Плитки карточек внутри */
+      const cards = items.map(b => {
+        const time = b.booking_time || '—';
+        const client = b.client_username ? `@${b.client_username}` : (b.client_name || 'Клиент');
+        const actions = b.status === 'pending' ? `
+          <button class="btn btn-sm" style="background:rgba(56,161,105,0.2);color:var(--success)"
+            onclick="setStatus('${b.id}','confirmed')">Подтвердить</button>
+          <button class="btn btn-sm" style="background:rgba(229,62,62,0.15);color:var(--danger)"
+            onclick="setStatus('${b.id}','cancelled')">Отменить</button>
+        ` : b.status === 'confirmed' ? `
+          <button class="btn btn-sm btn-secondary"
+            onclick="setStatus('${b.id}','cancelled')">Отменить</button>
+        ` : '';
+        return `
+          <div class="booking-card status-${b.status}">
+            <div class="booking-top">
+              <div class="booking-info">
+                <div class="booking-datetime">🕐 ${time}</div>
+                <div class="booking-client">👤 ${escHtml(client)}</div>
+                <div class="booking-service">💅 ${escHtml(b.service_name)} · ${b.service_price.toLocaleString('ru-RU')} ₽</div>
+              </div>
+              <div class="booking-actions">
+                <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
+                ${actions}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
 
       return `
-        <div class="booking-card status-${b.status}">
-          <div class="booking-top">
-            <div class="booking-info">
-              <div class="booking-datetime">📅 ${date} в ${time}</div>
-              <div class="booking-client">👤 ${escHtml(client)}</div>
-              <div class="booking-service">💅 ${escHtml(b.service_name)} · ${b.service_price.toLocaleString('ru-RU')} ₽</div>
+        <div class="date-group">
+          <div class="date-tile${isOpen ? ' open' : ''}" onclick="toggleDateGroup('${dateStr}')">
+            <div class="date-tile-left">
+              <div class="date-tile-day${isToday ? ' today' : isPast ? ' past' : ''}">${dayLabel}</div>
+              <div>
+                <div class="date-tile-label">${fullLabel}</div>
+                <div class="date-tile-sub">${subLabel}</div>
+              </div>
             </div>
-            <div class="booking-actions">
-              <span class="status-badge status-${b.status}">${STATUS_LABELS[b.status] || b.status}</span>
-              ${actions}
+            <div class="date-tile-right">
+              <span class="date-count">${countLabel}</span>
+              <span class="date-arrow">▾</span>
             </div>
           </div>
-        </div>
-      `;
+          <div class="date-body${isOpen ? ' open' : ''}">${cards}</div>
+        </div>`;
     }).join('');
   }
 
